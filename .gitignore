@@ -1,0 +1,15 @@
+# misc
+.DS_Store
+*.pem
+
+# IDE
+.vscode
+.idea
+
+# Byproduct of the test environment
+docker/.env
+docker/postgres/data/*
+docker/redis/data/*
+docker/nginx/ssl/*
+docker/nginx/conf.d/*.conf
+docker/etcd/*
