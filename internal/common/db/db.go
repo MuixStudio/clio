@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/muixstudio/clio/internal/services/common/db/config"
-
+	"github.com/muixstudio/clio/internal/common/db/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
