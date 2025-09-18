@@ -1,7 +1,8 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
+import { useEffect } from 'react'
 
+// eslint-disable-next-line sonarjs/no-globals-shadowing
 export default function Error({
   error,
   reset,
@@ -11,9 +12,9 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    /* eslint-disable no-console */
-    console.error(error);
-  }, [error]);
+
+    console.error(error)
+  }, [error])
 
   return (
     <div>
@@ -27,5 +28,5 @@ export default function Error({
         Try again
       </button>
     </div>
-  );
+  )
 }

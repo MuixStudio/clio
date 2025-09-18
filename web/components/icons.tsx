@@ -1,9 +1,9 @@
+import type { IconSvgProps } from "@/types";
+
 import * as React from "react";
 
-import { IconSvgProps } from "@/types";
-
-export const Logo: React.FC<IconSvgProps> = ({
-  size = 36,
+export const AdmgoLogo: React.FC<IconSvgProps> = ({
+  size = 24,
   width,
   height,
   ...props
@@ -11,13 +11,13 @@ export const Logo: React.FC<IconSvgProps> = ({
   <svg
     fill="none"
     height={size || height}
-    viewBox="0 0 32 32"
+    viewBox="0 0 24 24"
     width={size || width}
     {...props}
   >
     <path
       clipRule="evenodd"
-      d="M17.6482 10.1305L15.8785 7.02583L7.02979 22.5499H10.5278L17.6482 10.1305ZM19.8798 14.0457L18.11 17.1983L19.394 19.4511H16.8453L15.1056 22.5499H24.7272L19.8798 14.0457Z"
+      d="M0.015 0.015l6.3 0 0 3.32 -2.97 0 0 3.3 9.27 9.27 8 -8 0 -4.57 -2.97 0 0 -3.32 6.3 0 0 4.57 0 4.7 -11.33 11.33 8 0 0 -4.11 3.32 0 0 7.43 -23.92 0 0 -23.92zm3.32 11.33l0 9.27 9.27 0 -9.27 -9.27z"
       fill="currentColor"
       fillRule="evenodd"
     />

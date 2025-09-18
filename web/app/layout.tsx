@@ -1,11 +1,13 @@
 import "@/styles/globals.css";
-import { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
+
 import clsx from "clsx";
 
 import { Providers } from "./providers";
 
 import { siteConfig } from "@/config/site";
-import { fontMono, fontSans } from "@/config/fonts";
+import { fontSans } from "@/config/fonts";
+import { fontMono } from "@/config/fonts";
 
 export const metadata: Metadata = {
   title: {
@@ -35,16 +37,14 @@ export default function RootLayout({
       <head />
       <body
         className={clsx(
-          "min-h-screen text-foreground bg-background font-sans antialiased",
+          "text-foreground bg-background min-h-screen font-sans antialiased overflow-hidden",
           fontSans.variable,
           fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
-            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
-              {children}
-            </main>
+          <div className="relative h-screen w-full overflow-x-auto overflow-y-auto">
+            {children}
           </div>
         </Providers>
       </body>
