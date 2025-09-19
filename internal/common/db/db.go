@@ -60,10 +60,10 @@ func NewDB(conf *config.Config) (*DB, error) {
 	sdb.SetMaxOpenConns(conf.MaxOpenConns)
 	sdb.SetConnMaxLifetime(time.Second * time.Duration(conf.MaxLifetime))
 
-	err = db.Use(NewCustomePlugin())
-	if err != nil {
-		return nil, err
-	}
+	//err = db.Use(NewCustomePlugin())
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return &DB{DB: db}, nil
 }
