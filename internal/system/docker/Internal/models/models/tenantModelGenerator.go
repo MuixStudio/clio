@@ -27,23 +27,23 @@ type (
 		tableName string
 	}
 
-	TenantType uint16
+	TenantLevel uint16
 
 	Tenant struct {
 		BaseModel
-		Name       uint32     `gorm:"column:name;type:varchar(30);comment:租户名称"`
-		TenantName uint32     `gorm:"column:tenant_name;type:varchar(30);not null;unique;comment:租户名(唯一)"`
-		TenantType TenantType `gorm:"column:type;type:int;comment:租户类型"`
+		Name        uint32      `gorm:"column:name;type:varchar(30);comment:租户名称"`
+		TenantName  uint32      `gorm:"column:tenant_name;type:varchar(30);not null;unique;comment:租户名(唯一)"`
+		TenantLevel TenantLevel `gorm:"column:type;type:int;comment:租户类型"`
 	}
 )
 
-var TenantTypeMap = map[uint16]string{
+var TenantLevelMap = map[uint16]string{
 	Team:       "team",
 	Enterprise: "enterprise",
 }
 
-func (tp TenantType) Desc() string {
-	return TenantTypeMap[uint16(tp)]
+func (tp TenantLevel) Desc() string {
+	return TenantLevelMap[uint16(tp)]
 }
 
 func (emp Tenant) TableName() string {

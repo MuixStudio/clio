@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -20,14 +21,9 @@ type (
 
 	Token struct {
 		BaseModel
-		Name           string `gorm:"column:name;type:varchar(30);not null;comment:显示名"`
-		UserName       string `gorm:"column:username;type:varchar(30);not null;unique;comment:用户名(唯一)"`
-		Password       string `gorm:"column:password;type:varchar(100);not null;comment:密码"`
-		Email          string `gorm:"column:email;type:varchar(60);comment:邮箱"`
-		EmployeeNumber string `gorm:"column:employee_number;type:varchar(30);comment:员工号"`
-		Phone          string `gorm:"column:phone;type:varchar(30);comment:手机号"`
-		Avatar         string `gorm:"column:avatar;type:varchar(255);comment:头像"`
-		IsAdmin        bool   `gorm:"column:is_admin;type:bool;not null;comment:是否是管理员"`
+		Name           string    `gorm:"column:name;type:varchar(30);not null;comment:token名称"`
+		ExpirationTime time.Time `gorm:"column:expiration_time;comment:过期时间(为空时永不过期)"`
+		Scope          time.Time `gorm:"column:scope;unique;comment:权限范围"`
 	}
 )
 

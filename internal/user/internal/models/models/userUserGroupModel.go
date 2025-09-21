@@ -6,12 +6,12 @@ import (
 
 type (
 	UserUserGroupModel interface {
-		userGroupModel
+		userUserGroupModel
 		GetTableName() string
 	}
 
 	customUserUserGroupModel struct {
-		*defaultUserGroupModel
+		*defaultUserUserGroupModel
 	}
 )
 
@@ -21,6 +21,6 @@ func (c *customUserUserGroupModel) GetTableName() string {
 
 func NewUserUserGroupModel(conn *gorm.DB) UserUserGroupModel {
 	return &customUserUserGroupModel{
-		defaultUserGroupModel: newUserGroupModel(conn),
+		defaultUserUserGroupModel: newUserUserGroupModel(conn),
 	}
 }

@@ -27,19 +27,19 @@ type (
 		BaseModel
 		UseID    uint32 `gorm:"type:int;comment:用户ID"`
 		Avatar   string `gorm:"column:avatar;type:varchar(255);comment:头像"`
-		Locale   string `gorm:"column:avatar;type:varchar(255);comment:地址"`
-		Timezone string `gorm:"column:avatar;type:varchar(30);comment:时区"`
+		Locale   string `gorm:"column:locale;type:varchar(255);comment:地址"`
+		Timezone string `gorm:"column:timezone;type:varchar(30);comment:时区"`
 	}
 )
 
 func (emp UserProfile) TableName() string {
-	return TablePrefix + "_" + "users"
+	return TablePrefix + "_" + "user_profiles"
 }
 
 func newUserProfileModel(conn *gorm.DB) *defaultUserProfileModel {
 	return &defaultUserProfileModel{
 		db:        conn,
-		tableName: TablePrefix + "_" + "users",
+		tableName: TablePrefix + "_" + "user_profiles",
 	}
 }
 
