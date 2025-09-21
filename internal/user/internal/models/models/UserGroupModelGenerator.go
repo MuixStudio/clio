@@ -25,18 +25,17 @@ type (
 	userGroup struct {
 		BaseModel
 		Name       uint32 `gorm:"column:name;type:varchar(30);comment:用户组名称"`
-		TenantName uint32 `gorm:"column:tenant_name;type:varchar(30);not null;unique;comment:租户名(唯一)"`
 	}
 )
 
 func (emp userGroup) TableName() string {
-	return TablePrefix + "_" + "user_groups"
+	return TablePrefix + "_" + "usergroups"
 }
 
 func newUserGroupModel(conn *gorm.DB) *defaultUserGroupModel {
 	return &defaultUserGroupModel{
 		db:        conn,
-		tableName: TablePrefix + "_" + "user_groups",
+		tableName: TablePrefix + "_" + "usergroups",
 	}
 }
 
