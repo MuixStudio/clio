@@ -31,9 +31,10 @@ type (
 
 	Tenant struct {
 		BaseModel
-		Name        uint32      `gorm:"column:name;type:varchar(30);comment:租户名称"`
+		Name        string      `gorm:"column:name;type:varchar(30);comment:租户名称"`
+		TenantID    uint32      `gorm:"column:tenant_id;type:varchar(64);comment:租户ID(hashID,唯一)"`
 		TenantName  uint32      `gorm:"column:tenant_name;type:varchar(30);not null;unique;comment:租户名(唯一)"`
-		TenantLevel TenantLevel `gorm:"column:type;type:int;comment:租户类型"`
+		TenantLevel TenantLevel `gorm:"column:type;type:int;comment:租户等级"`
 	}
 )
 

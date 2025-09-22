@@ -12,4 +12,4 @@ type (
 	}
 )
 
-const TablePrefix = "user"
+const TablePrefix = "system"

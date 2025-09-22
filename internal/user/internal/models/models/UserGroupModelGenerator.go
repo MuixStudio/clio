@@ -24,7 +24,7 @@ type (
 
 	UserGroup struct {
 		BaseModel
-		Name uint32 `gorm:"column:name;not null;type:varchar(30);comment:用户组名称"`
+		Name string `gorm:"column:name;not null;type:varchar(30);comment:用户组名称"`
 	}
 )
 
