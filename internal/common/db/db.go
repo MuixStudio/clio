@@ -13,7 +13,7 @@ type DB struct {
 	*gorm.DB
 }
 
-func NewDB(conf *config.Config) (*DB, error) {
+func NewDB(conf config.Config) (*DB, error) {
 	if conf.MaxIdleConns == 0 {
 		conf.MaxIdleConns = 10
 	}
@@ -68,7 +68,7 @@ func NewDB(conf *config.Config) (*DB, error) {
 	return &DB{DB: db}, nil
 }
 
-func MustNewDB(conf *config.Config) *DB {
+func MustNewDB(conf config.Config) *DB {
 	db, err := NewDB(conf)
 	if err != nil {
 		panic(err)

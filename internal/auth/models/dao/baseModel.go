@@ -1,4 +1,4 @@
-package models
+package dao
 
 import (
 	"time"
@@ -12,4 +12,4 @@ type (
 	}
 )
 
-const TablePrefix = "system"
+const TablePrefix = "user"

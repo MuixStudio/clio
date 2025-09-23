@@ -39,6 +39,7 @@ type (
 		CountryCode    string       `gorm:"column:country_code;type:varchar(60);comment:手机区号"`
 		Phone          string       `gorm:"column:phone;type:varchar(60);comment:手机号"`
 		Email          string       `gorm:"column:email;type:varchar(60);comment:邮箱"`
+		IsAdmin        string       `gorm:"column:is_admin;type:boolean;not null;comment:是否是管理员"`
 		AuthProvider   AuthProvider `gorm:"column:auth_provider;type:smallint;;not null;uniqueIndex:username_auth_provider;comment:身份提供商"`
 		AuthProviderID uint32       `gorm:"column:auth_provider_id;type:int;uniqueIndex:username_auth_provide;comment:身份提供商ID"`
 	}

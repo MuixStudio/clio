@@ -21,9 +21,10 @@ type (
 
 	Token struct {
 		BaseModel
+		UseID          uint32    `gorm:"column:user_id;type:int;not null;comment:用户ID"`
 		Name           string    `gorm:"column:name;type:varchar(30);not null;comment:token名称"`
 		ExpirationTime time.Time `gorm:"column:expiration_time;comment:过期时间(为空时永不过期)"`
-		Scope          time.Time `gorm:"column:scope;unique;comment:权限范围"`
+		Scope          string    `gorm:"column:scope;not null;comment:权限范围"`
 	}
 )
 

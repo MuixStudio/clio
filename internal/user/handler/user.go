@@ -4,9 +4,14 @@ import (
 	"context"
 
 	"github.com/muixstudio/clio/internal/user/pb/user"
+	"github.com/muixstudio/clio/internal/user/svc"
+	"gorm.io/gorm"
 )
 
-type UserHandler struct{}
+type UserHandler struct{
+	db *gorm.DB
+	svcCtx svc.ServiceContext
+}
 
 func NewUserHandler() *UserHandler {
 	return &UserHandler{}
