@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package service;
-option go_package="./pb";
+package user;
+option go_package="pb/user";
 
 service User {
   // 创建用户
@@ -136,4 +136,4 @@ message UpdateUserEmployeeNumberResponse {
 }
 
 // server/user
-// goctl rpc protoc user.proto --go_out=./ --go-grpc_out=./ --zrpc_out=. --style goZero
+// protoc --proto_path=. --micro_out=. --go_out=:. proto/user.proto
