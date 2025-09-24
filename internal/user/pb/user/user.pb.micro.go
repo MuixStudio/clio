@@ -28,26 +28,34 @@ var _ server.Option
 // Client API for User service
 
 type UserService interface {
-	// 创建用户
+	// CreateUser creates a single user. Password is required for local accounts.
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...client.CallOption) (*CreateUserResponse, error)
-	// 根据用户ID查找指定用户
-	FindSingleUserByUserID(ctx context.Context, in *FindSingleUserByUserIDRequest, opts ...client.CallOption) (*FindSingleUserByUserIDResponse, error)
-	// 根据用户名密码查找指定用户
-	FindSingleUserByUsernameAndPassword(ctx context.Context, in *FindSingleUserByUsernameAndPasswordRequest, opts ...client.CallOption) (*FindSingleUserByUsernameAndPasswordResponse, error)
-	// 查找所有用户
-	FindAllUser(ctx context.Context, in *FindAllUserRequest, opts ...client.CallOption) (*FindAllUserResponse, error)
-	// 删除用户
+	// CreateUsers creates multiple users in a single batch request.
+	CreateUsers(ctx context.Context, in *CreateUsersRequest, opts ...client.CallOption) (*CreateUsersResponse, error)
+	// FindUserByID returns a single user by unique ID.
+	FindUserByID(ctx context.Context, in *FindUserByIDRequest, opts ...client.CallOption) (*FindUserByIDResponse, error)
+	// FindUsersByIDs returns multiple users by their unique IDs.
+	FindUsersByIDs(ctx context.Context, in *FindUsersByIDsRequest, opts ...client.CallOption) (*FindUsersByIDsResponse, error)
+	// FindUsersByName performs a fuzzy search by display name with pagination.
+	FindUsersByName(ctx context.Context, in *FindUsersByNameRequest, opts ...client.CallOption) (*FindUsersByNameResponse, error)
+	// FindUsers performs a composite search with optional filters and pagination.
+	FindUsers(ctx context.Context, in *FindUsersRequest, opts ...client.CallOption) (*FindUsersResponse, error)
+	// VerifyPassword validates a user's password (local account types only).
+	VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, opts ...client.CallOption) (*VerifyPasswordResponse, error)
+	// DeleteUser deletes a single user by ID.
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...client.CallOption) (*DeleteUserResponse, error)
-	// 更新用户信息（包括邮箱、用户名称等）
-	UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*UpdateUserInfoResponse, error)
-	// 更新用户邮箱
-	UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...client.CallOption) (*UpdateUserEmailResponse, error)
-	// 更新用户名称
+	// DeleteUsers deletes multiple users by IDs.
+	DeleteUsers(ctx context.Context, in *DeleteUsersRequest, opts ...client.CallOption) (*DeleteUsersResponse, error)
+	// UpdateEmail updates a user's email address.
+	UpdateEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...client.CallOption) (*UpdateUserEmailResponse, error)
+	// UpdateName updates a user's display name.
+	UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...client.CallOption) (*UpdateNameResponse, error)
+	// UpdateUserName updates a user's unique username.
 	UpdateUserName(ctx context.Context, in *UpdateUserNameRequest, opts ...client.CallOption) (*UpdateUserNameResponse, error)
-	// 更新用户手机号
-	UpdateUserPhone(ctx context.Context, in *UpdateUserPhoneRequest, opts ...client.CallOption) (*UpdateUserPhoneResponse, error)
-	// 更新用户员工号
-	UpdateUserEmployeeNumber(ctx context.Context, in *UpdateUserEmployeeNumberRequest, opts ...client.CallOption) (*UpdateUserEmployeeNumberResponse, error)
+	// UpdatePhone updates a user's phone number and country code.
+	UpdatePhone(ctx context.Context, in *UpdateUserPhoneRequest, opts ...client.CallOption) (*UpdateUserPhoneResponse, error)
+	// ChangeAdminStatus updates a user's administrative status.
+	ChangeAdminStatus(ctx context.Context, in *ChangeAdminStatusRequest, opts ...client.CallOption) (*ChangeAdminStatusResponse, error)
 }
 
 type userService struct {
@@ -72,9 +80,9 @@ func (c *userService) CreateUser(ctx context.Context, in *CreateUserRequest, opt
 	return out, nil
 }
 
-func (c *userService) FindSingleUserByUserID(ctx context.Context, in *FindSingleUserByUserIDRequest, opts ...client.CallOption) (*FindSingleUserByUserIDResponse, error) {
-	req := c.c.NewRequest(c.name, "User.FindSingleUserByUserID", in)
-	out := new(FindSingleUserByUserIDResponse)
+func (c *userService) CreateUsers(ctx context.Context, in *CreateUsersRequest, opts ...client.CallOption) (*CreateUsersResponse, error) {
+	req := c.c.NewRequest(c.name, "User.CreateUsers", in)
+	out := new(CreateUsersResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,9 +90,9 @@ func (c *userService) FindSingleUserByUserID(ctx context.Context, in *FindSingle
 	return out, nil
 }
 
-func (c *userService) FindSingleUserByUsernameAndPassword(ctx context.Context, in *FindSingleUserByUsernameAndPasswordRequest, opts ...client.CallOption) (*FindSingleUserByUsernameAndPasswordResponse, error) {
-	req := c.c.NewRequest(c.name, "User.FindSingleUserByUsernameAndPassword", in)
-	out := new(FindSingleUserByUsernameAndPasswordResponse)
+func (c *userService) FindUserByID(ctx context.Context, in *FindUserByIDRequest, opts ...client.CallOption) (*FindUserByIDResponse, error) {
+	req := c.c.NewRequest(c.name, "User.FindUserByID", in)
+	out := new(FindUserByIDResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -92,9 +100,39 @@ func (c *userService) FindSingleUserByUsernameAndPassword(ctx context.Context, i
 	return out, nil
 }
 
-func (c *userService) FindAllUser(ctx context.Context, in *FindAllUserRequest, opts ...client.CallOption) (*FindAllUserResponse, error) {
-	req := c.c.NewRequest(c.name, "User.FindAllUser", in)
-	out := new(FindAllUserResponse)
+func (c *userService) FindUsersByIDs(ctx context.Context, in *FindUsersByIDsRequest, opts ...client.CallOption) (*FindUsersByIDsResponse, error) {
+	req := c.c.NewRequest(c.name, "User.FindUsersByIDs", in)
+	out := new(FindUsersByIDsResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userService) FindUsersByName(ctx context.Context, in *FindUsersByNameRequest, opts ...client.CallOption) (*FindUsersByNameResponse, error) {
+	req := c.c.NewRequest(c.name, "User.FindUsersByName", in)
+	out := new(FindUsersByNameResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userService) FindUsers(ctx context.Context, in *FindUsersRequest, opts ...client.CallOption) (*FindUsersResponse, error) {
+	req := c.c.NewRequest(c.name, "User.FindUsers", in)
+	out := new(FindUsersResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userService) VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, opts ...client.CallOption) (*VerifyPasswordResponse, error) {
+	req := c.c.NewRequest(c.name, "User.VerifyPassword", in)
+	out := new(VerifyPasswordResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -112,9 +150,9 @@ func (c *userService) DeleteUser(ctx context.Context, in *DeleteUserRequest, opt
 	return out, nil
 }
 
-func (c *userService) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*UpdateUserInfoResponse, error) {
-	req := c.c.NewRequest(c.name, "User.UpdateUserInfo", in)
-	out := new(UpdateUserInfoResponse)
+func (c *userService) DeleteUsers(ctx context.Context, in *DeleteUsersRequest, opts ...client.CallOption) (*DeleteUsersResponse, error) {
+	req := c.c.NewRequest(c.name, "User.DeleteUsers", in)
+	out := new(DeleteUsersResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -122,9 +160,19 @@ func (c *userService) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequ
 	return out, nil
 }
 
-func (c *userService) UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...client.CallOption) (*UpdateUserEmailResponse, error) {
-	req := c.c.NewRequest(c.name, "User.UpdateUserEmail", in)
+func (c *userService) UpdateEmail(ctx context.Context, in *UpdateUserEmailRequest, opts ...client.CallOption) (*UpdateUserEmailResponse, error) {
+	req := c.c.NewRequest(c.name, "User.UpdateEmail", in)
 	out := new(UpdateUserEmailResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userService) UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...client.CallOption) (*UpdateNameResponse, error) {
+	req := c.c.NewRequest(c.name, "User.UpdateName", in)
+	out := new(UpdateNameResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -142,8 +190,8 @@ func (c *userService) UpdateUserName(ctx context.Context, in *UpdateUserNameRequ
 	return out, nil
 }
 
-func (c *userService) UpdateUserPhone(ctx context.Context, in *UpdateUserPhoneRequest, opts ...client.CallOption) (*UpdateUserPhoneResponse, error) {
-	req := c.c.NewRequest(c.name, "User.UpdateUserPhone", in)
+func (c *userService) UpdatePhone(ctx context.Context, in *UpdateUserPhoneRequest, opts ...client.CallOption) (*UpdateUserPhoneResponse, error) {
+	req := c.c.NewRequest(c.name, "User.UpdatePhone", in)
 	out := new(UpdateUserPhoneResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
@@ -152,9 +200,9 @@ func (c *userService) UpdateUserPhone(ctx context.Context, in *UpdateUserPhoneRe
 	return out, nil
 }
 
-func (c *userService) UpdateUserEmployeeNumber(ctx context.Context, in *UpdateUserEmployeeNumberRequest, opts ...client.CallOption) (*UpdateUserEmployeeNumberResponse, error) {
-	req := c.c.NewRequest(c.name, "User.UpdateUserEmployeeNumber", in)
-	out := new(UpdateUserEmployeeNumberResponse)
+func (c *userService) ChangeAdminStatus(ctx context.Context, in *ChangeAdminStatusRequest, opts ...client.CallOption) (*ChangeAdminStatusResponse, error) {
+	req := c.c.NewRequest(c.name, "User.ChangeAdminStatus", in)
+	out := new(ChangeAdminStatusResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -165,40 +213,52 @@ func (c *userService) UpdateUserEmployeeNumber(ctx context.Context, in *UpdateUs
 // Server API for User service
 
 type UserHandler interface {
-	// 创建用户
+	// CreateUser creates a single user. Password is required for local accounts.
 	CreateUser(context.Context, *CreateUserRequest, *CreateUserResponse) error
-	// 根据用户ID查找指定用户
-	FindSingleUserByUserID(context.Context, *FindSingleUserByUserIDRequest, *FindSingleUserByUserIDResponse) error
-	// 根据用户名密码查找指定用户
-	FindSingleUserByUsernameAndPassword(context.Context, *FindSingleUserByUsernameAndPasswordRequest, *FindSingleUserByUsernameAndPasswordResponse) error
-	// 查找所有用户
-	FindAllUser(context.Context, *FindAllUserRequest, *FindAllUserResponse) error
-	// 删除用户
+	// CreateUsers creates multiple users in a single batch request.
+	CreateUsers(context.Context, *CreateUsersRequest, *CreateUsersResponse) error
+	// FindUserByID returns a single user by unique ID.
+	FindUserByID(context.Context, *FindUserByIDRequest, *FindUserByIDResponse) error
+	// FindUsersByIDs returns multiple users by their unique IDs.
+	FindUsersByIDs(context.Context, *FindUsersByIDsRequest, *FindUsersByIDsResponse) error
+	// FindUsersByName performs a fuzzy search by display name with pagination.
+	FindUsersByName(context.Context, *FindUsersByNameRequest, *FindUsersByNameResponse) error
+	// FindUsers performs a composite search with optional filters and pagination.
+	FindUsers(context.Context, *FindUsersRequest, *FindUsersResponse) error
+	// VerifyPassword validates a user's password (local account types only).
+	VerifyPassword(context.Context, *VerifyPasswordRequest, *VerifyPasswordResponse) error
+	// DeleteUser deletes a single user by ID.
 	DeleteUser(context.Context, *DeleteUserRequest, *DeleteUserResponse) error
-	// 更新用户信息（包括邮箱、用户名称等）
-	UpdateUserInfo(context.Context, *UpdateUserInfoRequest, *UpdateUserInfoResponse) error
-	// 更新用户邮箱
-	UpdateUserEmail(context.Context, *UpdateUserEmailRequest, *UpdateUserEmailResponse) error
-	// 更新用户名称
+	// DeleteUsers deletes multiple users by IDs.
+	DeleteUsers(context.Context, *DeleteUsersRequest, *DeleteUsersResponse) error
+	// UpdateEmail updates a user's email address.
+	UpdateEmail(context.Context, *UpdateUserEmailRequest, *UpdateUserEmailResponse) error
+	// UpdateName updates a user's display name.
+	UpdateName(context.Context, *UpdateNameRequest, *UpdateNameResponse) error
+	// UpdateUserName updates a user's unique username.
 	UpdateUserName(context.Context, *UpdateUserNameRequest, *UpdateUserNameResponse) error
-	// 更新用户手机号
-	UpdateUserPhone(context.Context, *UpdateUserPhoneRequest, *UpdateUserPhoneResponse) error
-	// 更新用户员工号
-	UpdateUserEmployeeNumber(context.Context, *UpdateUserEmployeeNumberRequest, *UpdateUserEmployeeNumberResponse) error
+	// UpdatePhone updates a user's phone number and country code.
+	UpdatePhone(context.Context, *UpdateUserPhoneRequest, *UpdateUserPhoneResponse) error
+	// ChangeAdminStatus updates a user's administrative status.
+	ChangeAdminStatus(context.Context, *ChangeAdminStatusRequest, *ChangeAdminStatusResponse) error
 }
 
 func RegisterUserHandler(s server.Server, hdlr UserHandler, opts ...server.HandlerOption) error {
 	type user interface {
 		CreateUser(ctx context.Context, in *CreateUserRequest, out *CreateUserResponse) error
-		FindSingleUserByUserID(ctx context.Context, in *FindSingleUserByUserIDRequest, out *FindSingleUserByUserIDResponse) error
-		FindSingleUserByUsernameAndPassword(ctx context.Context, in *FindSingleUserByUsernameAndPasswordRequest, out *FindSingleUserByUsernameAndPasswordResponse) error
-		FindAllUser(ctx context.Context, in *FindAllUserRequest, out *FindAllUserResponse) error
+		CreateUsers(ctx context.Context, in *CreateUsersRequest, out *CreateUsersResponse) error
+		FindUserByID(ctx context.Context, in *FindUserByIDRequest, out *FindUserByIDResponse) error
+		FindUsersByIDs(ctx context.Context, in *FindUsersByIDsRequest, out *FindUsersByIDsResponse) error
+		FindUsersByName(ctx context.Context, in *FindUsersByNameRequest, out *FindUsersByNameResponse) error
+		FindUsers(ctx context.Context, in *FindUsersRequest, out *FindUsersResponse) error
+		VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, out *VerifyPasswordResponse) error
 		DeleteUser(ctx context.Context, in *DeleteUserRequest, out *DeleteUserResponse) error
-		UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *UpdateUserInfoResponse) error
-		UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, out *UpdateUserEmailResponse) error
+		DeleteUsers(ctx context.Context, in *DeleteUsersRequest, out *DeleteUsersResponse) error
+		UpdateEmail(ctx context.Context, in *UpdateUserEmailRequest, out *UpdateUserEmailResponse) error
+		UpdateName(ctx context.Context, in *UpdateNameRequest, out *UpdateNameResponse) error
 		UpdateUserName(ctx context.Context, in *UpdateUserNameRequest, out *UpdateUserNameResponse) error
-		UpdateUserPhone(ctx context.Context, in *UpdateUserPhoneRequest, out *UpdateUserPhoneResponse) error
-		UpdateUserEmployeeNumber(ctx context.Context, in *UpdateUserEmployeeNumberRequest, out *UpdateUserEmployeeNumberResponse) error
+		UpdatePhone(ctx context.Context, in *UpdateUserPhoneRequest, out *UpdateUserPhoneResponse) error
+		ChangeAdminStatus(ctx context.Context, in *ChangeAdminStatusRequest, out *ChangeAdminStatusResponse) error
 	}
 	type User struct {
 		user
@@ -215,38 +275,54 @@ func (h *userHandler) CreateUser(ctx context.Context, in *CreateUserRequest, out
 	return h.UserHandler.CreateUser(ctx, in, out)
 }
 
-func (h *userHandler) FindSingleUserByUserID(ctx context.Context, in *FindSingleUserByUserIDRequest, out *FindSingleUserByUserIDResponse) error {
-	return h.UserHandler.FindSingleUserByUserID(ctx, in, out)
+func (h *userHandler) CreateUsers(ctx context.Context, in *CreateUsersRequest, out *CreateUsersResponse) error {
+	return h.UserHandler.CreateUsers(ctx, in, out)
 }
 
-func (h *userHandler) FindSingleUserByUsernameAndPassword(ctx context.Context, in *FindSingleUserByUsernameAndPasswordRequest, out *FindSingleUserByUsernameAndPasswordResponse) error {
-	return h.UserHandler.FindSingleUserByUsernameAndPassword(ctx, in, out)
+func (h *userHandler) FindUserByID(ctx context.Context, in *FindUserByIDRequest, out *FindUserByIDResponse) error {
+	return h.UserHandler.FindUserByID(ctx, in, out)
 }
 
-func (h *userHandler) FindAllUser(ctx context.Context, in *FindAllUserRequest, out *FindAllUserResponse) error {
-	return h.UserHandler.FindAllUser(ctx, in, out)
+func (h *userHandler) FindUsersByIDs(ctx context.Context, in *FindUsersByIDsRequest, out *FindUsersByIDsResponse) error {
+	return h.UserHandler.FindUsersByIDs(ctx, in, out)
+}
+
+func (h *userHandler) FindUsersByName(ctx context.Context, in *FindUsersByNameRequest, out *FindUsersByNameResponse) error {
+	return h.UserHandler.FindUsersByName(ctx, in, out)
+}
+
+func (h *userHandler) FindUsers(ctx context.Context, in *FindUsersRequest, out *FindUsersResponse) error {
+	return h.UserHandler.FindUsers(ctx, in, out)
+}
+
+func (h *userHandler) VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, out *VerifyPasswordResponse) error {
+	return h.UserHandler.VerifyPassword(ctx, in, out)
 }
 
 func (h *userHandler) DeleteUser(ctx context.Context, in *DeleteUserRequest, out *DeleteUserResponse) error {
 	return h.UserHandler.DeleteUser(ctx, in, out)
 }
 
-func (h *userHandler) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *UpdateUserInfoResponse) error {
-	return h.UserHandler.UpdateUserInfo(ctx, in, out)
+func (h *userHandler) DeleteUsers(ctx context.Context, in *DeleteUsersRequest, out *DeleteUsersResponse) error {
+	return h.UserHandler.DeleteUsers(ctx, in, out)
 }
 
-func (h *userHandler) UpdateUserEmail(ctx context.Context, in *UpdateUserEmailRequest, out *UpdateUserEmailResponse) error {
-	return h.UserHandler.UpdateUserEmail(ctx, in, out)
+func (h *userHandler) UpdateEmail(ctx context.Context, in *UpdateUserEmailRequest, out *UpdateUserEmailResponse) error {
+	return h.UserHandler.UpdateEmail(ctx, in, out)
+}
+
+func (h *userHandler) UpdateName(ctx context.Context, in *UpdateNameRequest, out *UpdateNameResponse) error {
+	return h.UserHandler.UpdateName(ctx, in, out)
 }
 
 func (h *userHandler) UpdateUserName(ctx context.Context, in *UpdateUserNameRequest, out *UpdateUserNameResponse) error {
 	return h.UserHandler.UpdateUserName(ctx, in, out)
 }
 
-func (h *userHandler) UpdateUserPhone(ctx context.Context, in *UpdateUserPhoneRequest, out *UpdateUserPhoneResponse) error {
-	return h.UserHandler.UpdateUserPhone(ctx, in, out)
+func (h *userHandler) UpdatePhone(ctx context.Context, in *UpdateUserPhoneRequest, out *UpdateUserPhoneResponse) error {
+	return h.UserHandler.UpdatePhone(ctx, in, out)
 }
 
-func (h *userHandler) UpdateUserEmployeeNumber(ctx context.Context, in *UpdateUserEmployeeNumberRequest, out *UpdateUserEmployeeNumberResponse) error {
-	return h.UserHandler.UpdateUserEmployeeNumber(ctx, in, out)
+func (h *userHandler) ChangeAdminStatus(ctx context.Context, in *ChangeAdminStatusRequest, out *ChangeAdminStatusResponse) error {
+	return h.UserHandler.ChangeAdminStatus(ctx, in, out)
 }

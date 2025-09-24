@@ -5,22 +5,22 @@ import (
 )
 
 type (
-	UserProfileModel interface {
-		userProfileModel
+	ProfileModel interface {
+		profileModel
 		GetTableName() string
 	}
 
-	customUserProfileModel struct {
-		*defaultUserProfileModel
+	customProfileModel struct {
+		*defaultProfileModel
 	}
 )
 
-func (c *customUserProfileModel) GetTableName() string {
+func (c *customProfileModel) GetTableName() string {
 	return c.tableName
 }
 
-func NewUserProfileModel(conn *gorm.DB) UserProfileModel {
-	return &customUserProfileModel{
-		defaultUserProfileModel: newUserProfileModel(conn),
+func NewProfileModel(conn *gorm.DB) ProfileModel {
+	return &customProfileModel{
+		defaultProfileModel: newProfileModel(conn),
 	}
 }

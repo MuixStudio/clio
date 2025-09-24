@@ -8,13 +8,17 @@ import (
 
 type (
 	userGroupModel interface {
-		Insert(ctx context.Context, data *UserGroup) error
-		Find(ctx context.Context, data interface{}) (interface{}, error)
-		FindOne(ctx context.Context, id int64) (*UserGroup, error)
-		FindAll(ctx context.Context, limit int) ([]*UserGroup, error)
-		FindByFields(ctx context.Context, fields interface{}, limit int) ([]*UserGroup, error)
-		Count(ctx context.Context) (int64, error)
+		Create(ctx context.Context, data *UserGroup) error
+		CreateInBatches(ctx context.Context, data []*UserGroup, batchSize int) (err error, RowsAffected int64)
+
 		Update(ctx context.Context, data *UserGroup) error
+		UpdateInBatches(ctx context.Context, data []*UserGroup) error
+
+		Find(ctx context.Context, data *UserGroup, offset int, limit int) ([]*UserGroup, error)
+		Count(ctx context.Context, data *UserGroup) (int64, error)
+
+		Delete(ctx context.Context, data *UserGroup) error
+		DeleteInBatches(ctx context.Context, data []*UserGroup) error
 	}
 
 	defaultUserGroupModel struct {
@@ -39,87 +43,55 @@ func newUserGroupModel(conn *gorm.DB) *defaultUserGroupModel {
 	}
 }
 
-func (m *defaultUserGroupModel) Insert(ctx context.Context, data *UserGroup) error {
-	return m.db.WithContext(ctx).Create(data).Error
+func (d defaultUserGroupModel) Create(ctx context.Context, data *UserGroup) error {
+	return d.db.WithContext(ctx).Create(data).Error
 }
 
-func (m *defaultUserGroupModel) Find(ctx context.Context, data interface{}) (interface{}, error) {
-	u := data
-	err := m.db.WithContext(ctx).Find(u).Error
-	return u, err
+func (d defaultUserGroupModel) CreateInBatches(ctx context.Context, data []*UserGroup, batchSize int) (err error, RowsAffected int64) {
+	res := d.db.WithContext(ctx).CreateInBatches(data, batchSize)
+	return res.Error, res.RowsAffected
 }
 
-func (m *defaultUserGroupModel) FindOne(ctx context.Context, id int64) (*UserGroup, error) {
-	var result UserGroup
-	err := m.db.WithContext(ctx).Model(&UserGroup{}).Where("id = ?", id).First(&result).Error
-	return &result, err
+func (d defaultUserGroupModel) Update(ctx context.Context, data *UserGroup) error {
+	return d.db.WithContext(ctx).Updates(data).Error
 }
 
-func (m *defaultUserGroupModel) FindByFields(ctx context.Context, fields interface{}, limit int) ([]*UserGroup, error) {
-	var result []*UserGroup
-	err := m.db.WithContext(ctx).Model(&UserGroup{}).Where(fields).Limit(limit).Find(&result).Error
-	return result, err
-}
-
-func (m *defaultUserGroupModel) FindAll(ctx context.Context, limit int) ([]*UserGroup, error) {
-	var result []*UserGroup
-	err := m.db.WithContext(ctx).Model(&UserGroup{}).Limit(limit).Find(&result).Error
-	return result, err
-}
-
-func (m *defaultUserGroupModel) Count(ctx context.Context) (int64, error) {
-	var result int64
-	err := m.db.WithContext(ctx).Model(&UserGroup{}).Count(&result).Error
-	return result, err
-}
-
-func (m *defaultUserGroupModel) Update(ctx context.Context, data *UserGroup) error {
-	return m.db.WithContext(ctx).Save(data).Error
-}
-
-func (m *defaultUserGroupModel) UpdateFields(ctx context.Context, id int64, values map[string]interface{}) error {
-	return m.db.WithContext(ctx).Model(&UserGroup{}).Where("id = ?", id).Updates(values).Error
-}
-
-func (m *defaultUserGroupModel) FindByUserProfileIDAndPassword(ctx context.Context, username string, password string) (*UserGroup, error) {
-	var result UserGroup
-	err := m.db.WithContext(ctx).
-		Where("username = ? AND password = ?", username, password).
-		First(&result).Error
-	if err == gorm.ErrRecordNotFound {
-		return nil, nil
+func (d defaultUserGroupModel) UpdateInBatches(ctx context.Context, data []*UserGroup) error {
+	callFc := func(tx *gorm.DB) error {
+		for _, userGroup := range data {
+			if err := tx.WithContext(ctx).Updates(userGroup).Error; err != nil {
+				return err
+			}
+		}
+		return nil
 	}
-
-	return &result, err
+	return d.db.WithContext(ctx).Transaction(callFc)
 }
 
-func (m *defaultUserGroupModel) FindByUserProfileId(ctx context.Context, userId int64, limit int) ([]*UserGroup, error) {
-	var result []*UserGroup
-	err := m.db.WithContext(ctx).
-		Where("user_id = ? AND follow_status = ?", userId, 1).
-		Order("id desc").
-		Limit(limit).
-		Find(&result).Error
-
-	return result, err
+func (d defaultUserGroupModel) Find(ctx context.Context, data *UserGroup, offset int, limit int) ([]*UserGroup, error) {
+	records := make([]*UserGroup, 0)
+	res := d.db.WithContext(ctx).Where(data).Order("created_at desc").Offset(offset).Limit(limit).Find(&records)
+	return records, res.Error
 }
 
-func (m *defaultUserGroupModel) FindByFollowedUserProfileIds(ctx context.Context, userId int64, followedUserProfileIds []int64) ([]*UserGroup, error) {
-	var result []*UserGroup
-	err := m.db.WithContext(ctx).
-		Where("user_id = ?", userId).
-		Where("followed_user_id in (?)", followedUserProfileIds).
-		Find(&result).Error
-
-	return result, err
+func (d defaultUserGroupModel) Count(ctx context.Context, data *UserGroup) (int64, error) {
+	var count int64
+	res := d.db.WithContext(ctx).Model(&UserGroup{}).Where(data).Count(&count)
+	return count, res.Error
 }
 
-func (m *defaultUserGroupModel) FindByFollowedUserProfileId(ctx context.Context, userId int64, limit int) ([]*UserGroup, error) {
-	var result []*UserGroup
-	err := m.db.WithContext(ctx).
-		Where("followed_user_id = ? AND follow_status = ?", userId, 1).
-		Order("id desc").
-		Limit(limit).
-		Find(&result).Error
-	return result, err
+func (d defaultUserGroupModel) Delete(ctx context.Context, data *UserGroup) error {
+	return d.db.WithContext(ctx).Delete(data).Error
+}
+
+func (d defaultUserGroupModel) DeleteInBatches(ctx context.Context, data []*UserGroup) error {
+	callFc := func(tx *gorm.DB) error {
+		for _, userGroup := range data {
+			if err := tx.WithContext(ctx).Delete(userGroup).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return d.db.WithContext(ctx).Transaction(callFc)
 }

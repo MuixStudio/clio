@@ -3,36 +3,66 @@ package handler
 import (
 	"context"
 
+	"github.com/muixstudio/clio/internal/user/config"
+	"github.com/muixstudio/clio/internal/user/models/dao"
 	"github.com/muixstudio/clio/internal/user/pb/user"
 	"github.com/muixstudio/clio/internal/user/svc"
-	"gorm.io/gorm"
 )
 
-type UserHandler struct{
-	db *gorm.DB
-	svcCtx svc.ServiceContext
+type UserHandler struct {
+	svcCtx *svc.ServiceContext
 }
 
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(c config.Config) *UserHandler {
+	return &UserHandler{
+		svcCtx: svc.NewServiceContext(c),
+	}
 }
 
 func (u UserHandler) CreateUser(ctx context.Context, request *user.CreateUserRequest, response *user.CreateUserResponse) error {
+	data := dao.User{
+		Name:        &request.Name,
+		UserName:    &request.UserName,
+		Password:    request.Password,
+		CountryCode: request.GetCountryCode(),
+		Phone:       request.GetPhone(),
+		Email:       request.GetEmail(),
+		IsAdmin:     request.GetIsAdmin(),
+	}
+	err := u.svcCtx.UserModel.Create(ctx, &data)
+	if err != nil {
+		return err
+	}
+	response.Id = data.ID
+	return nil
+}
+
+func (u UserHandler) CreateUsers(ctx context.Context, request *user.CreateUsersRequest, response *user.CreateUsersResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserHandler) FindSingleUserByUserID(ctx context.Context, request *user.FindSingleUserByUserIDRequest, response *user.FindSingleUserByUserIDResponse) error {
+func (u UserHandler) FindUserByID(ctx context.Context, request *user.FindUserByIDRequest, response *user.FindUserByIDResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserHandler) FindSingleUserByUsernameAndPassword(ctx context.Context, request *user.FindSingleUserByUsernameAndPasswordRequest, response *user.FindSingleUserByUsernameAndPasswordResponse) error {
+func (u UserHandler) FindUsersByIDs(ctx context.Context, request *user.FindUsersByIDsRequest, response *user.FindUsersByIDsResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserHandler) FindAllUser(ctx context.Context, request *user.FindAllUserRequest, response *user.FindAllUserResponse) error {
+func (u UserHandler) FindUsersByName(ctx context.Context, request *user.FindUsersByNameRequest, response *user.FindUsersByNameResponse) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u UserHandler) FindUsers(ctx context.Context, request *user.FindUsersRequest, response *user.FindUsersResponse) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u UserHandler) VerifyPassword(ctx context.Context, request *user.VerifyPasswordRequest, response *user.VerifyPasswordResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -42,12 +72,17 @@ func (u UserHandler) DeleteUser(ctx context.Context, request *user.DeleteUserReq
 	panic("implement me")
 }
 
-func (u UserHandler) UpdateUserInfo(ctx context.Context, request *user.UpdateUserInfoRequest, response *user.UpdateUserInfoResponse) error {
+func (u UserHandler) DeleteUsers(ctx context.Context, request *user.DeleteUsersRequest, response *user.DeleteUsersResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserHandler) UpdateUserEmail(ctx context.Context, request *user.UpdateUserEmailRequest, response *user.UpdateUserEmailResponse) error {
+func (u UserHandler) UpdateEmail(ctx context.Context, request *user.UpdateUserEmailRequest, response *user.UpdateUserEmailResponse) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u UserHandler) UpdateName(ctx context.Context, request *user.UpdateNameRequest, response *user.UpdateNameResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -57,12 +92,12 @@ func (u UserHandler) UpdateUserName(ctx context.Context, request *user.UpdateUse
 	panic("implement me")
 }
 
-func (u UserHandler) UpdateUserPhone(ctx context.Context, request *user.UpdateUserPhoneRequest, response *user.UpdateUserPhoneResponse) error {
+func (u UserHandler) UpdatePhone(ctx context.Context, request *user.UpdateUserPhoneRequest, response *user.UpdateUserPhoneResponse) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u UserHandler) UpdateUserEmployeeNumber(ctx context.Context, request *user.UpdateUserEmployeeNumberRequest, response *user.UpdateUserEmployeeNumberResponse) error {
+func (u UserHandler) ChangeAdminStatus(ctx context.Context, request *user.ChangeAdminStatusRequest, response *user.ChangeAdminStatusResponse) error {
 	//TODO implement me
 	panic("implement me")
 }

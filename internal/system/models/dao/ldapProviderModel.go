@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"context"
+
 	"gorm.io/gorm"
 )
 
@@ -13,6 +15,11 @@ type (
 	customLdapProviderModel struct {
 		*defaultLdapProviderModel
 	}
+
+func (c *customLdapProviderModel) Insert(ctx context.context.Context, data *UserGroup) error {
+	//TODO implement me
+	panic("implement me")
+}
 )
 
 func (c *customLdapProviderModel) GetTableName() string {

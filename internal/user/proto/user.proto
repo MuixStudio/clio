@@ -3,137 +3,198 @@ syntax = "proto3";
 package user;
 option go_package="pb/user";
 
+// User service provides CRUD operations, search, authentication verification,
+// and administrative state changes for user entities.
+// All requests and responses are synchronous gRPC calls unless otherwise noted.
 service User {
-  // 创建用户
+  // CreateUser creates a single user. Password is required for local accounts.
   rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
-  // 根据用户ID查找指定用户
-  rpc FindSingleUserByUserID (FindSingleUserByUserIDRequest) returns (FindSingleUserByUserIDResponse);
-  // 根据用户名密码查找指定用户
-  rpc FindSingleUserByUsernameAndPassword (FindSingleUserByUsernameAndPasswordRequest) returns (FindSingleUserByUsernameAndPasswordResponse);
-  // 查找所有用户
-  rpc FindAllUser (FindAllUserRequest) returns (FindAllUserResponse);
-  // 删除用户
+  // CreateUsers creates multiple users in a single batch request.
+  rpc CreateUsers (CreateUsersRequest) returns (CreateUsersResponse);
+
+  // FindUserByID returns a single user by unique ID.
+  rpc FindUserByID (FindUserByIDRequest) returns (FindUserByIDResponse);
+  // FindUsersByIDs returns multiple users by their unique IDs.
+  rpc FindUsersByIDs (FindUsersByIDsRequest) returns (FindUsersByIDsResponse);
+  // FindUsersByName performs a fuzzy search by display name with pagination.
+  rpc FindUsersByName (FindUsersByNameRequest) returns (FindUsersByNameResponse);
+  // FindUsers performs a composite search with optional filters and pagination.
+  rpc FindUsers (FindUsersRequest) returns (FindUsersResponse);
+  // VerifyPassword validates a user's password (local account types only).
+  rpc VerifyPassword (VerifyPasswordRequest) returns (VerifyPasswordResponse);
+
+  // DeleteUser deletes a single user by ID.
   rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
-  // 更新用户信息（包括邮箱、用户名称等）
-  rpc UpdateUserInfo (UpdateUserInfoRequest) returns (UpdateUserInfoResponse);
-  // 更新用户邮箱
-  rpc UpdateUserEmail (UpdateUserEmailRequest) returns (UpdateUserEmailResponse);
-  // 更新用户名称
+  // DeleteUsers deletes multiple users by IDs.
+  rpc DeleteUsers (DeleteUsersRequest) returns (DeleteUsersResponse);
+
+  // UpdateEmail updates a user's email address.
+  rpc UpdateEmail (UpdateUserEmailRequest) returns (UpdateUserEmailResponse);
+  // UpdateName updates a user's display name.
+  rpc UpdateName (UpdateNameRequest) returns (UpdateNameResponse);
+  // UpdateUserName updates a user's unique username.
   rpc UpdateUserName (UpdateUserNameRequest) returns (UpdateUserNameResponse);
-  // 更新用户手机号
-  rpc UpdateUserPhone (UpdateUserPhoneRequest) returns (UpdateUserPhoneResponse);
-  // 更新用户员工号
-  rpc UpdateUserEmployeeNumber (UpdateUserEmployeeNumberRequest) returns (UpdateUserEmployeeNumberResponse);
+  // UpdatePhone updates a user's phone number and country code.
+  rpc UpdatePhone (UpdateUserPhoneRequest) returns (UpdateUserPhoneResponse);
+  // ChangeAdminStatus updates a user's administrative status.
+  rpc ChangeAdminStatus (ChangeAdminStatusRequest) returns (ChangeAdminStatusResponse);
 }
 
+// UserItem represents the immutable and mutable properties of a user entity.
+// Optional fields may be absent if not set or not applicable.
 message UserItem {
-  string name = 1; // 显示名
-  string userName = 2; // 用户名
-  string phone = 3; // 手机号
-  string email = 4; // 邮箱
-  string employeeNumber = 5; // 员工号
-  string avatar = 6; // 头像
-  bool isAdmin = 7; // 是否是管理员
+  uint32 id = 1;                                        // Unique user ID (server-generated)
+  string name = 2;                                      // Display name (human-readable)
+  string userName = 3;                                  // Unique username (login-friendly)
+  string countryCode = 4;                               // E.164 country calling code (e.g., "+1", "+86")
+  string phone = 5;                                     // Phone number without separators; paired with countryCode
+  string email = 6;                                     // Email address (should be RFC 5322 compliant)
+  bool isAdmin = 7;                                     // Administrative privilege flag
 }
 
+// CreateUserRequest creates a single user with optional phone attributes.
+// Security note: password must be transmitted over TLS; do not log raw password.
 message CreateUserRequest {
-  string name = 1; // 显示名
-  string userName = 2; // 用户名
-  string password = 3; // 用户名
-  string phone = 4; // 手机号
-  string email = 5; // 邮箱
-  string employeeNumber = 6; // 员工号
+  string name = 1;                                      // Display name
+  string userName = 2;                                  // Unique username
+  string password = 3;                                  // Required for local accounts
+  optional string countryCode = 4;                      // E.164 country code (e.g., "+1")
+  optional string phone = 5;                            // Phone number paired with countryCode
+  optional string email = 6;                            // Email address
+  optional bool isAdmin = 7;                            // Initial admin status (restricted usage recommended)
 }
 
 message CreateUserResponse {
+  uint32 id = 1;                                        // Newly created user ID
 }
 
-message FindSingleUserByUserIDRequest {
-  uint32 userID = 1; // 用户ID
+// CreateUsersRequest creates multiple users in batch.
+// Implementations should validate each entry independently and may apply transactional semantics.
+message CreateUsersRequest {
+  repeated CreateUserRequest users = 1;                 // Users to create
 }
 
-message FindSingleUserByUserIDResponse {
-  uint32 userID = 1; // 显示名
-  string name = 2; // 显示名
-  string userName = 3; // 用户名
-  string phone = 4; // 手机号
-  string email = 5; // 邮箱
-  string employeeNumber = 6; // 员工号
-  string avatar = 7; // 头像
-  bool isAdmin = 8; // 是否是管理员
+message CreateUsersResponse {
+  repeated uint32 ids = 1;                              // IDs of successfully created users (order-aligned with input)
 }
 
-message FindSingleUserByUsernameAndPasswordRequest {
-  string userName = 1; // 用户名
-  string password = 2; // 用户名
+// FindUserByIDRequest fetches a user by unique ID.
+message FindUserByIDRequest {
+  uint32 id = 1;                                        // Target user ID
 }
 
-message FindSingleUserByUsernameAndPasswordResponse {
-  uint32 userID = 1; // 显示名
-  string name = 2; // 显示名
-  string userName = 3; // 用户名
-  string phone = 4; // 手机号
-  string email = 5; // 邮箱
-  string employeeNumber = 6; // 员工号
-  string avatar = 7; // 头像
-  bool isAdmin = 8; // 是否是管理员
+message FindUserByIDResponse {
+  UserItem user = 1;                                    // User record; may be empty if not found depending on implementation
 }
 
-message FindAllUserRequest {
-  uint32 userID = 1; // 用户ID
+// FindUsersByIDsRequest fetches multiple users by IDs.
+message FindUsersByIDsRequest {
+  repeated uint32 ids = 1;                              // Target user IDs
 }
 
-message FindAllUserResponse {
-  repeated UserItem userList = 1;
+message FindUsersByIDsResponse {
+  repeated UserItem users = 1;                          // User records found (order not guaranteed)
 }
 
+// FindUsersByNameRequest performs a fuzzy search by display name.
+// Pagination: page starts from 1. pageSize should be a positive integer.
+// Implementations may enforce maximum pageSize limits.
+message FindUsersByNameRequest {
+  string name = 1;                                      // Name keyword for fuzzy matching
+  int32 page = 2;                                       // Page index (1-based)
+  int32 pageSize = 3;                                   // Items per page
+}
+
+message FindUsersByNameResponse {
+  repeated UserItem users = 1;                          // Page of matched users
+  int64 total = 2;                                      // Total number of matched records across all pages
+}
+
+// FindUsersRequest performs a composite search across multiple optional filters.
+// Any combination of the optional fields may be provided. Pagination: page is 1-based.
+message FindUsersRequest {
+  optional string name = 1;                             // Display name (fuzzy match)
+  optional string userName = 2;                         // Username (exact or fuzzy per implementation)
+  optional string email = 3;                            // Email address (exact or fuzzy per implementation)
+  optional string phone = 4;                            // Phone number
+  optional string countryCode = 5;                      // Country dialing code
+  optional bool isAdmin = 6;                            // Filter by admin status
+
+  int32 page = 7;                                       // Page index (1-based)
+  int32 pageSize = 8;                                   // Items per page (positive integer)
+}
+
+message FindUsersResponse {
+  repeated UserItem users = 1;                          // Page of matched users
+  int64 total = 2;                                      // Total number of matched records across all pages
+}
+
+// VerifyPasswordRequest validates credentials for local users.
+// Security note: must be sent only over TLS; avoid logging sensitive fields.
+message VerifyPasswordRequest {
+  string userName = 1;                                  // Username to verify
+  string password = 2;                                  // Plaintext password (to be hashed server-side)
+}
+
+message VerifyPasswordResponse {
+  bool ok = 1;                                          // True if credentials are valid
+  uint32 userID = 2;                                    // Returned when ok=true: authenticated user ID
+}
+
+// DeleteUserRequest deletes a single user by ID.
 message DeleteUserRequest {
-  uint32 userID = 1; // 用户ID
+  uint32 id = 1;                                        // User ID to delete
 }
 
-message DeleteUserResponse {
+message DeleteUserResponse {}                           // Empty on success
+
+// DeleteUsersRequest deletes multiple users by IDs.
+message DeleteUsersRequest {
+  repeated uint32 ids = 1;                              // User IDs to delete
 }
 
-message UpdateUserInfoRequest {
-  optional string name = 1; // 显示名
-  optional int64 phone = 3; // 手机号
-  optional string email = 4; // 邮箱
-  optional int64 employeeNumber = 5; // 员工号
-}
-message UpdateUserInfoResponse {
+message DeleteUsersResponse {
+  int64 deletedRecords = 1;                             // Number of records actually deleted
 }
 
+// UpdateUserEmailRequest updates the email of a specific user.
 message UpdateUserEmailRequest {
-  uint32 userID = 1; // 用户ID
-  string email = 2; // 邮箱
+  uint32 id = 1;                                        // Target user ID
+  string email = 2;                                     // New email address
 }
 
-message UpdateUserEmailResponse {
+message UpdateUserEmailResponse {}                      // Empty on success
+
+// UpdateNameRequest updates the display name of a specific user.
+message UpdateNameRequest {
+  uint32 id = 1;                                        // Target user ID
+  string name = 2;                                      // New display name
 }
 
+message UpdateNameResponse {}                           // Empty on success
+
+// UpdateUserNameRequest updates the unique username of a specific user.
 message UpdateUserNameRequest {
-  uint32 userID = 1; // 用户ID
-  string name = 2; // 显示名
+  uint32 id = 1;                                        // Target user ID
+  string userName = 2;                                  // New unique username
 }
 
-message UpdateUserNameResponse {
-}
+message UpdateUserNameResponse {}                       // Empty on success
 
+// UpdateUserPhoneRequest updates the user's phone number and country code together.
 message UpdateUserPhoneRequest {
-  uint32 userID = 1; // 用户ID
-  string phone = 3; // 手机号
+  uint32 id = 1;                                        // Target user ID
+  string countryCode = 2;                               // E.164 country code (e.g., "+1")
+  string phone = 3;                                     // Phone number without separators
 }
 
-message UpdateUserPhoneResponse {
+message UpdateUserPhoneResponse {}                      // Empty on success
+
+// ChangeAdminStatusRequest toggles a user's administrative privilege.
+// Note: field numbering preserves existing layout; only id and isAdmin are used.
+message ChangeAdminStatusRequest {
+  uint32 id = 1;                                        // Target user ID
+  bool isAdmin = 6;                                     // Desired admin status
 }
 
-message UpdateUserEmployeeNumberRequest {
-  uint32 userID = 1; // 用户ID
-  string employeeNumber = 5; // 员工号
-}
-
-message UpdateUserEmployeeNumberResponse {
-}
-
-// server/user
-// protoc --proto_path=. --micro_out=. --go_out=:. proto/user.proto
+message ChangeAdminStatusResponse {}                    // Empty on success

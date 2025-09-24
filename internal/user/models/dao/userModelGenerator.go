@@ -14,14 +14,17 @@ const (
 
 type (
 	userModel interface {
-		Insert(ctx context.Context, data *User) error
-		Find(ctx context.Context, data interface{}) (interface{}, error)
-		FindOne(ctx context.Context, id int64) (*User, error)
-		FindAll(ctx context.Context, limit int) ([]*User, error)
-		FindByFields(ctx context.Context, fields interface{}, limit int) ([]*User, error)
-		Count(ctx context.Context) (int64, error)
+		Create(ctx context.Context, data *User) error
+		CreateInBatches(ctx context.Context, data []*User, batchSize int) (err error, RowsAffected int64)
+
 		Update(ctx context.Context, data *User) error
-		FindByUserIDAndPassword(ctx context.Context, username string, password string) (*User, error)
+		UpdateInBatches(ctx context.Context, data []*User) error
+
+		Find(ctx context.Context, data *User, offset int, limit int) ([]*User, error)
+		Count(ctx context.Context, data *User) (int64, error)
+
+		Delete(ctx context.Context, data *User) error
+		DeleteInBatches(ctx context.Context, data []*User) error
 	}
 
 	defaultUserModel struct {
@@ -33,15 +36,15 @@ type (
 
 	User struct {
 		BaseModel
-		Name           string       `gorm:"column:name;type:varchar(30);not null;comment:显示名"`
-		UserName       string       `gorm:"column:username;type:varchar(30);not null;uniqueIndex:username_auth_provider;comment:用户名(唯一)"`
+		Name           *string      `gorm:"column:name;type:varchar(30);not null;comment:显示名"`
+		UserName       *string      `gorm:"column:username;type:varchar(30);not null;uniqueIndex:username_auth_provider;comment:用户名(唯一)"`
 		Password       string       `gorm:"column:password;type:varchar(100);comment:密码(身份提供商不是Local时可以为空)"`
 		CountryCode    string       `gorm:"column:country_code;type:varchar(60);comment:手机区号"`
 		Phone          string       `gorm:"column:phone;type:varchar(60);comment:手机号"`
 		Email          string       `gorm:"column:email;type:varchar(60);comment:邮箱"`
-		IsAdmin        string       `gorm:"column:is_admin;type:boolean;not null;comment:是否是管理员"`
+		IsAdmin        bool         `gorm:"column:is_admin;type:boolean;not null;comment:是否是管理员"`
 		AuthProvider   AuthProvider `gorm:"column:auth_provider;type:smallint;;not null;uniqueIndex:username_auth_provider;comment:身份提供商"`
-		AuthProviderID uint32       `gorm:"column:auth_provider_id;type:int;uniqueIndex:username_auth_provide;comment:身份提供商ID"`
+		AuthProviderID uint32       `gorm:"column:auth_provider_id;type:int;uniqueIndex:username_auth_provider;comment:身份提供商ID"`
 	}
 )
 
@@ -66,87 +69,55 @@ func newUserModel(conn *gorm.DB) *defaultUserModel {
 	}
 }
 
-func (m *defaultUserModel) Insert(ctx context.Context, data *User) error {
-	return m.db.WithContext(ctx).Create(data).Error
+func (d defaultUserModel) Create(ctx context.Context, data *User) error {
+	return d.db.WithContext(ctx).Create(data).Error
 }
 
-func (m *defaultUserModel) Find(ctx context.Context, data interface{}) (interface{}, error) {
-	u := data
-	err := m.db.WithContext(ctx).Find(u).Error
-	return u, err
+func (d defaultUserModel) CreateInBatches(ctx context.Context, data []*User, batchSize int) (err error, RowsAffected int64) {
+	res := d.db.WithContext(ctx).CreateInBatches(data, batchSize)
+	return res.Error, res.RowsAffected
 }
 
-func (m *defaultUserModel) FindOne(ctx context.Context, id int64) (*User, error) {
-	var result User
-	err := m.db.WithContext(ctx).Model(&User{}).Where("id = ?", id).First(&result).Error
-	return &result, err
+func (d defaultUserModel) Update(ctx context.Context, data *User) error {
+	return d.db.WithContext(ctx).Updates(data).Error
 }
 
-func (m *defaultUserModel) FindByFields(ctx context.Context, fields interface{}, limit int) ([]*User, error) {
-	var result []*User
-	err := m.db.WithContext(ctx).Model(&User{}).Where(fields).Limit(limit).Find(&result).Error
-	return result, err
-}
-
-func (m *defaultUserModel) FindAll(ctx context.Context, limit int) ([]*User, error) {
-	var result []*User
-	err := m.db.WithContext(ctx).Model(&User{}).Limit(limit).Find(&result).Error
-	return result, err
-}
-
-func (m *defaultUserModel) Count(ctx context.Context) (int64, error) {
-	var result int64
-	err := m.db.WithContext(ctx).Model(&User{}).Count(&result).Error
-	return result, err
-}
-
-func (m *defaultUserModel) Update(ctx context.Context, data *User) error {
-	return m.db.WithContext(ctx).Save(data).Error
-}
-
-func (m *defaultUserModel) UpdateFields(ctx context.Context, id int64, values map[string]interface{}) error {
-	return m.db.WithContext(ctx).Model(&User{}).Where("id = ?", id).Updates(values).Error
-}
-
-func (m *defaultUserModel) FindByUserIDAndPassword(ctx context.Context, username string, password string) (*User, error) {
-	var result User
-	err := m.db.WithContext(ctx).
-		Where("username = ? AND password = ?", username, password).
-		First(&result).Error
-	if err == gorm.ErrRecordNotFound {
-		return nil, nil
+func (d defaultUserModel) UpdateInBatches(ctx context.Context, data []*User) error {
+	callFc := func(tx *gorm.DB) error {
+		for _, userGroup := range data {
+			if err := tx.WithContext(ctx).Updates(userGroup).Error; err != nil {
+				return err
+			}
+		}
+		return nil
 	}
-
-	return &result, err
+	return d.db.WithContext(ctx).Transaction(callFc)
 }
 
-func (m *defaultUserModel) FindByUserId(ctx context.Context, userId int64, limit int) ([]*User, error) {
-	var result []*User
-	err := m.db.WithContext(ctx).
-		Where("user_id = ? AND follow_status = ?", userId, 1).
-		Order("id desc").
-		Limit(limit).
-		Find(&result).Error
-
-	return result, err
+func (d defaultUserModel) Find(ctx context.Context, data *User, offset int, limit int) ([]*User, error) {
+	records := make([]*User, 0)
+	res := d.db.WithContext(ctx).Where(data).Order("created_at desc").Offset(offset).Limit(limit).Find(&records)
+	return records, res.Error
 }
 
-func (m *defaultUserModel) FindByFollowedUserIds(ctx context.Context, userId int64, followedUserIds []int64) ([]*User, error) {
-	var result []*User
-	err := m.db.WithContext(ctx).
-		Where("user_id = ?", userId).
-		Where("followed_user_id in (?)", followedUserIds).
-		Find(&result).Error
-
-	return result, err
+func (d defaultUserModel) Count(ctx context.Context, data *User) (int64, error) {
+	var count int64
+	res := d.db.WithContext(ctx).Model(&User{}).Where(data).Count(&count)
+	return count, res.Error
 }
 
-func (m *defaultUserModel) FindByFollowedUserId(ctx context.Context, userId int64, limit int) ([]*User, error) {
-	var result []*User
-	err := m.db.WithContext(ctx).
-		Where("followed_user_id = ? AND follow_status = ?", userId, 1).
-		Order("id desc").
-		Limit(limit).
-		Find(&result).Error
-	return result, err
+func (d defaultUserModel) Delete(ctx context.Context, data *User) error {
+	return d.db.WithContext(ctx).Delete(data).Error
+}
+
+func (d defaultUserModel) DeleteInBatches(ctx context.Context, data []*User) error {
+	callFc := func(tx *gorm.DB) error {
+		for _, userGroup := range data {
+			if err := tx.WithContext(ctx).Delete(userGroup).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return d.db.WithContext(ctx).Transaction(callFc)
 }

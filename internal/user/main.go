@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/muixstudio/clio/internal/user/config"
 	"github.com/muixstudio/clio/internal/user/handler"
 	"github.com/muixstudio/clio/internal/user/pb/user"
 	"go-micro.dev/v5"
@@ -14,7 +15,7 @@ func main() {
 
 	// 创建服务
 	service := micro.NewService(
-		micro.Name("user.prc"),
+		micro.Name("user.User"),
 		micro.Version("0.0.1"),
 	)
 
@@ -24,10 +25,15 @@ func main() {
 	)
 
 	// 注册 handler
-	user.RegisterUserHandler(service.Server(), handler.NewUserHandler())
+	var c config.Config
+	err := user.RegisterUserHandler(service.Server(), handler.NewUserHandler(c))
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// 运行服务
-	if err := service.Run(); err != nil {
+	if err = service.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
