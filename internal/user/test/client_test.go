@@ -28,10 +28,15 @@ func TestClient(t *testing.T) {
 	)
 
 	client := user.NewUserService("user.User", service.Client())
+	//phone := ""
+	//name := ""
+	username := ""
+	password := ""
+	//isAdmin := true
 	rsp, err := client.CreateUser(context.Background(), &user.CreateUserRequest{
-		//Name: "123",
-		UserName: "username",
-		Password: "password",
+		//Name:     &name,
+		Password: &password,
+		UserName: &username,
 	})
 	if err != nil {
 		log.Fatal(err)

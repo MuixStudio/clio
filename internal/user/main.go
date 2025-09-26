@@ -1,12 +1,13 @@
 package main
 
 import (
-	"log"
+	"os"
 
 	"github.com/muixstudio/clio/internal/user/config"
 	"github.com/muixstudio/clio/internal/user/handler"
 	"github.com/muixstudio/clio/internal/user/pb/user"
 	"go-micro.dev/v5"
+	"go-micro.dev/v5/logger"
 	"go-micro.dev/v5/transport/grpc"
 )
 
@@ -22,6 +23,10 @@ func main() {
 	// 初始化
 	service.Init(
 		micro.Transport(grpcTransport),
+		micro.Logger(logger.NewLogger(
+			logger.WithLevel(logger.TraceLevel),
+			logger.WithOutput(os.Stdout),
+		)),
 	)
 
 	// 注册 handler
@@ -29,11 +34,11 @@ func main() {
 	err := user.RegisterUserHandler(service.Server(), handler.NewUserHandler(c))
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	// 运行服务
 	if err = service.Run(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }

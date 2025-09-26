@@ -7,6 +7,7 @@ import (
 	"github.com/muixstudio/clio/internal/user/models/dao"
 	"github.com/muixstudio/clio/internal/user/pb/user"
 	"github.com/muixstudio/clio/internal/user/svc"
+	"go-micro.dev/v5/logger"
 )
 
 type UserHandler struct {
@@ -20,17 +21,19 @@ func NewUserHandler(c config.Config) *UserHandler {
 }
 
 func (u UserHandler) CreateUser(ctx context.Context, request *user.CreateUserRequest, response *user.CreateUserResponse) error {
+	l := dao.LOCAL
 	data := dao.User{
-		Name:        &request.Name,
-		UserName:    &request.UserName,
-		Password:    request.Password,
-		CountryCode: request.GetCountryCode(),
-		Phone:       request.GetPhone(),
-		Email:       request.GetEmail(),
-		IsAdmin:     request.GetIsAdmin(),
+		Name:         request.Name,
+		UserName:     request.UserName,
+		Password:     request.Password,
+		CountryCode:  request.CountryCode,
+		Phone:        request.Phone,
+		Email:        request.Email,
+		AuthProvider: &l,
 	}
 	err := u.svcCtx.UserModel.Create(ctx, &data)
 	if err != nil {
+		logger.Error(ctx, err)
 		return err
 	}
 	response.Id = data.ID

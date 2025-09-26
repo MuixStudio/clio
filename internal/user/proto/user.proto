@@ -55,9 +55,9 @@ message UserItem {
 // CreateUserRequest creates a single user with optional phone attributes.
 // Security note: password must be transmitted over TLS; do not log raw password.
 message CreateUserRequest {
-  string name = 1;                                      // Display name
-  string userName = 2;                                  // Unique username
-  string password = 3;                                  // Required for local accounts
+  optional string name = 1;                             // Display name
+  optional string userName = 2;                         // Unique username
+  optional string password = 3;                         // Required for local accounts
   optional string countryCode = 4;                      // E.164 country code (e.g., "+1")
   optional string phone = 5;                            // Phone number paired with countryCode
   optional string email = 6;                            // Email address
