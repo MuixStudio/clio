@@ -3,47 +3,50 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/muixstudio/clio/internal/aggregater/middleware"
+	"github.com/muixstudio/clio/internal/aggregater/svc"
 )
 
-func Register(r *gin.RouterGroup) {
+func Register(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {
+
+	userHandler := NewUserHandler(svcCtx)
 
 	ar := r.Group("")
 	ar.Use(middleware.TestMid())
 
-	r.GET("/users", NewUserHandler().GetUsers())
+	r.GET("/users", userHandler.GetUsers())
 
-	r.GET("/user/user_info", NewUserHandler().GetUserInfo())
-	r.GET("/user/profile", NewUserHandler().GetUserProfile())
-	r.GET("/user/email", NewUserHandler().GetUserEmail())
-	r.GET("/user/phone", NewUserHandler().GetUserPhone())
-	r.GET("/user/status", NewUserHandler().GetUserStatus())
+	r.GET("/user/user_info", userHandler.GetUserInfo())
+	r.GET("/user/profile", userHandler.GetUserProfile())
+	r.GET("/user/email", userHandler.GetUserEmail())
+	r.GET("/user/phone", userHandler.GetUserPhone())
+	r.GET("/user/status", userHandler.GetUserStatus())
 
-	r.GET("/user/:user_id", NewUserHandler().GetUserByUserID())
-	r.GET("/user/:user_id/profile", NewUserHandler().GetUserProfileByUserID())
-	r.GET("/user/:user_id/email", NewUserHandler().GetUserEmailByUserID())
-	r.GET("/user/:user_id/phone", NewUserHandler().GetUserPhoneByUserID())
-	r.GET("/user/:user_id/status", NewUserHandler().GetUserStatusByUserID())
+	r.GET("/user/:user_id", userHandler.GetUserByUserID())
+	r.GET("/user/:user_id/profile", userHandler.GetUserProfileByUserID())
+	r.GET("/user/:user_id/email", userHandler.GetUserEmailByUserID())
+	r.GET("/user/:user_id/phone", userHandler.GetUserPhoneByUserID())
+	r.GET("/user/:user_id/status", userHandler.GetUserStatusByUserID())
 
-	r.POST("/user", NewUserHandler().CreateUser())
+	r.POST("/user", userHandler.CreateUser())
 
-	r.PUT("/user/profile", NewUserHandler().ChangeProfile())
-	r.PUT("/user/password", NewUserHandler().ChangePassword())
-	r.PUT("/user/username", NewUserHandler().ChangeUserName())
-	r.PUT("/user/name", NewUserHandler().ChangeName())
-	r.PUT("/user/email", NewUserHandler().ChangeEmail())
-	r.PUT("/user/phone", NewUserHandler().ChangePhone())
-	r.PUT("/user/status", NewUserHandler().ChangeStatus())
-	r.PUT("/user/identity", NewUserHandler().ChangeIdentity())
+	r.PUT("/user/profile", userHandler.ChangeProfile())
+	r.PUT("/user/password", userHandler.ChangePassword())
+	r.PUT("/user/username", userHandler.ChangeUserName())
+	r.PUT("/user/name", userHandler.ChangeName())
+	r.PUT("/user/email", userHandler.ChangeEmail())
+	r.PUT("/user/phone", userHandler.ChangePhone())
+	r.PUT("/user/status", userHandler.ChangeStatus())
+	r.PUT("/user/identity", userHandler.ChangeIdentity())
 
-	ar.PUT("/user/:user_id/profile", NewUserHandler().ChangeProfileByUserID())
-	ar.PUT("/user/:user_id/password", NewUserHandler().ChangePasswordByUserID())
-	ar.PUT("/user/:user_id/username", NewUserHandler().ChangeUserNameByUserID())
-	ar.PUT("/user/:user_id/name", NewUserHandler().ChangeNameByUserID())
-	ar.PUT("/user/:user_id/email", NewUserHandler().ChangeEmailByUserID())
-	ar.PUT("/user/:user_id/phone", NewUserHandler().ChangePhoneByUserID())
-	ar.PUT("/user/:user_id/status", NewUserHandler().ChangeStatusByUserID())
-	ar.PUT("/user/:user_id/identity", NewUserHandler().ChangeIdentityByUserID())
+	ar.PUT("/user/:user_id/profile", userHandler.ChangeProfileByUserID())
+	ar.PUT("/user/:user_id/password", userHandler.ChangePasswordByUserID())
+	ar.PUT("/user/:user_id/username", userHandler.ChangeUserNameByUserID())
+	ar.PUT("/user/:user_id/name", userHandler.ChangeNameByUserID())
+	ar.PUT("/user/:user_id/email", userHandler.ChangeEmailByUserID())
+	ar.PUT("/user/:user_id/phone", userHandler.ChangePhoneByUserID())
+	ar.PUT("/user/:user_id/status", userHandler.ChangeStatusByUserID())
+	ar.PUT("/user/:user_id/identity", userHandler.ChangeIdentityByUserID())
 
-	r.DELETE("/user", NewUserHandler().DeleteUser())
-	r.DELETE("/user/:user_id", NewUserHandler().DeleteUserByUserID())
+	r.DELETE("/user", userHandler.DeleteUser())
+	r.DELETE("/user/:user_id", userHandler.DeleteUserByUserID())
 }

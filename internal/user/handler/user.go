@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 
 	"github.com/muixstudio/clio/internal/user/config"
 	"github.com/muixstudio/clio/internal/user/models/dao"
@@ -66,8 +67,20 @@ func (u UserHandler) FindUsers(ctx context.Context, request *user.FindUsersReque
 }
 
 func (u UserHandler) VerifyPassword(ctx context.Context, request *user.VerifyPasswordRequest, response *user.VerifyPasswordResponse) error {
-	//TODO implement me
-	panic("implement me")
+	username := request.UserName
+	password := request.Password
+	us, err := u.svcCtx.UserModel.Find(ctx, &dao.User{
+		UserName: &username,
+		Password: &password,
+	}, -1, 1)
+	if err != nil {
+		return err
+	}
+	if len(us) == 0 {
+		return errors.New("user not found")
+	}
+	response.UserID = us[0].ID
+	return nil
 }
 
 func (u UserHandler) DeleteUser(ctx context.Context, request *user.DeleteUserRequest, response *user.DeleteUserResponse) error {

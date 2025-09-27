@@ -1,10 +1,16 @@
 package auth
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/muixstudio/clio/internal/aggregater/svc"
+)
 
-func Register(r *gin.RouterGroup) {
-	r.POST("/login", NewAuthHandler().Login())
-	r.POST("/logout", NewAuthHandler().Logout())
-	r.POST("/register", NewAuthHandler().Register())
-	r.POST("/refresh_token", NewAuthHandler().RefreshToken())
+func Register(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {
+
+	authHandler := NewAuthHandler(svcCtx)
+
+	r.POST("/login", authHandler.Login())
+	r.POST("/logout", authHandler.Logout())
+	r.POST("/register", authHandler.Register())
+	r.POST("/refresh_token", authHandler.RefreshToken())
 }

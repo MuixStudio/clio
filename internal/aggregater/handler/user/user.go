@@ -1,12 +1,18 @@
 package user
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/muixstudio/clio/internal/aggregater/svc"
+)
 
 type UserHandler struct {
+	svcCtx *svc.ServiceContext
 }
 
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(svcCtx *svc.ServiceContext) *UserHandler {
+	return &UserHandler{
+		svcCtx: svcCtx,
+	}
 }
 
 func (ah UserHandler) GetUsers() gin.HandlerFunc {
