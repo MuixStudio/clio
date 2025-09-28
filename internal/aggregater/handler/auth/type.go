@@ -5,5 +5,8 @@ type (
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-	LoginResp struct{}
+	LoginResp struct {
+		Username string `json:"username"`
+		UserID   uint32 `json:"userId"`
+	}
 )

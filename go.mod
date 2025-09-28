@@ -4,6 +4,8 @@ go 1.24.3
 
 require (
 	github.com/gin-gonic/gin v1.10.1
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/redis/go-redis/v9 v9.14.0
 	github.com/spf13/cobra v1.10.1
 	go-micro.dev/v5 v5.9.0
 	go.uber.org/zap v1.27.0
