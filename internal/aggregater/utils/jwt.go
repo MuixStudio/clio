@@ -52,7 +52,7 @@ func ParseRefreshToken(tokenStr string) (jwt.MapClaims, error) {
 	return *claims, nil
 }
 
-func GenerateAccessToken(userID uint32) (string, error) {
+func GenerateAccessToken(userID uint64) (string, error) {
 	accessTokenClaims := jwt.MapClaims{
 		"sub":     strconv.Itoa(int(userID)),
 		"exp":     time.Now().Add(accessTokenExp).Unix(),
@@ -71,7 +71,7 @@ func GenerateAccessToken(userID uint32) (string, error) {
 	return accessTokenStr, nil
 }
 
-func GenerateRefreshToken(userID uint32) (string, error) {
+func GenerateRefreshToken(userID uint64) (string, error) {
 	refreshTokenClaims := jwt.MapClaims{
 		"sub":     strconv.Itoa(int(userID)),
 		"exp":     time.Now().Add(refreshTokenExp).Unix(),

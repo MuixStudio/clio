@@ -24,6 +24,14 @@ func (ah UserHandler) GetUsers() gin.HandlerFunc {
 func (ah UserHandler) GetUserInfo() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+		userID := c.GetUint64("user_id")
+
+		//先查缓存
+		//再查数据库
+
+		c.JSON(200, gin.H{
+			"user_id": userID,
+		})
 	}
 }
 

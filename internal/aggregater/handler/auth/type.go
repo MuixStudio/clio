@@ -7,6 +7,6 @@ type (
 	}
 	LoginResp struct {
 		Username string `json:"username"`
-		UserID   uint32 `json:"userId"`
+		UserID   uint64 `json:"userId"`
 	}
 )

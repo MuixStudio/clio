@@ -15,7 +15,7 @@ func Register(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 
 	r.GET("/users", userHandler.GetUsers())
 
-	r.GET("/user/user_info", userHandler.GetUserInfo())
+	r.GET("/user/userinfo", userHandler.GetUserInfo())
 	r.GET("/user/profile", userHandler.GetUserProfile())
 	r.GET("/user/email", userHandler.GetUserEmail())
 	r.GET("/user/phone", userHandler.GetUserPhone())

@@ -43,7 +43,7 @@ service User {
 // UserItem represents the immutable and mutable properties of a user entity.
 // Optional fields may be absent if not set or not applicable.
 message UserItem {
-  uint32 id = 1;                                        // Unique user ID (server-generated)
+  uint64 id = 1;                                        // Unique user ID (server-generated)
   string name = 2;                                      // Display name (human-readable)
   string userName = 3;                                  // Unique username (login-friendly)
   string countryCode = 4;                               // E.164 country calling code (e.g., "+1", "+86")
@@ -65,7 +65,7 @@ message CreateUserRequest {
 }
 
 message CreateUserResponse {
-  uint32 id = 1;                                        // Newly created user ID
+  uint64 id = 1;                                        // Newly created user ID
 }
 
 // CreateUsersRequest creates multiple users in batch.
@@ -75,12 +75,12 @@ message CreateUsersRequest {
 }
 
 message CreateUsersResponse {
-  repeated uint32 ids = 1;                              // IDs of successfully created users (order-aligned with input)
+  repeated uint64 ids = 1;                              // IDs of successfully created users (order-aligned with input)
 }
 
 // FindUserByIDRequest fetches a user by unique ID.
 message FindUserByIDRequest {
-  uint32 id = 1;                                        // Target user ID
+  uint64 id = 1;                                        // Target user ID
 }
 
 message FindUserByIDResponse {
@@ -89,7 +89,7 @@ message FindUserByIDResponse {
 
 // FindUsersByIDsRequest fetches multiple users by IDs.
 message FindUsersByIDsRequest {
-  repeated uint32 ids = 1;                              // Target user IDs
+  repeated uint64 ids = 1;                              // Target user IDs
 }
 
 message FindUsersByIDsResponse {
@@ -138,19 +138,19 @@ message VerifyPasswordRequest {
 
 message VerifyPasswordResponse {
   bool ok = 1;                                          // True if credentials are valid
-  uint32 userID = 2;                                    // Returned when ok=true: authenticated user ID
+  uint64 userID = 2;                                    // Returned when ok=true: authenticated user ID
 }
 
 // DeleteUserRequest deletes a single user by ID.
 message DeleteUserRequest {
-  uint32 id = 1;                                        // User ID to delete
+  uint64 id = 1;                                        // User ID to delete
 }
 
 message DeleteUserResponse {}                           // Empty on success
 
 // DeleteUsersRequest deletes multiple users by IDs.
 message DeleteUsersRequest {
-  repeated uint32 ids = 1;                              // User IDs to delete
+  repeated uint64 ids = 1;                              // User IDs to delete
 }
 
 message DeleteUsersResponse {
@@ -159,7 +159,7 @@ message DeleteUsersResponse {
 
 // UpdateUserEmailRequest updates the email of a specific user.
 message UpdateUserEmailRequest {
-  uint32 id = 1;                                        // Target user ID
+  uint64 id = 1;                                        // Target user ID
   string email = 2;                                     // New email address
 }
 
@@ -167,7 +167,7 @@ message UpdateUserEmailResponse {}                      // Empty on success
 
 // UpdateNameRequest updates the display name of a specific user.
 message UpdateNameRequest {
-  uint32 id = 1;                                        // Target user ID
+  uint64 id = 1;                                        // Target user ID
   string name = 2;                                      // New display name
 }
 
@@ -175,7 +175,7 @@ message UpdateNameResponse {}                           // Empty on success
 
 // UpdateUserNameRequest updates the unique username of a specific user.
 message UpdateUserNameRequest {
-  uint32 id = 1;                                        // Target user ID
+  uint64 id = 1;                                        // Target user ID
   string userName = 2;                                  // New unique username
 }
 
@@ -183,7 +183,7 @@ message UpdateUserNameResponse {}                       // Empty on success
 
 // UpdateUserPhoneRequest updates the user's phone number and country code together.
 message UpdateUserPhoneRequest {
-  uint32 id = 1;                                        // Target user ID
+  uint64 id = 1;                                        // Target user ID
   string countryCode = 2;                               // E.164 country code (e.g., "+1")
   string phone = 3;                                     // Phone number without separators
 }
@@ -193,7 +193,7 @@ message UpdateUserPhoneResponse {}                      // Empty on success
 // ChangeAdminStatusRequest toggles a user's administrative privilege.
 // Note: field numbering preserves existing layout; only id and isAdmin are used.
 message ChangeAdminStatusRequest {
-  uint32 id = 1;                                        // Target user ID
+  uint64 id = 1;                                        // Target user ID
   bool isAdmin = 6;                                     // Desired admin status
 }
 

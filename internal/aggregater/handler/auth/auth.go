@@ -130,7 +130,7 @@ func (ah AuthHandler) RefreshToken() gin.HandlerFunc {
 			return
 		}
 
-		accessTokenStr, err := utils.GenerateAccessToken(uint32(userId))
+		accessTokenStr, err := utils.GenerateAccessToken(uint64(userId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    10003,
@@ -138,7 +138,7 @@ func (ah AuthHandler) RefreshToken() gin.HandlerFunc {
 			})
 			return
 		}
-		refreshTokenStr, err := utils.GenerateRefreshToken(uint32(userId))
+		refreshTokenStr, err := utils.GenerateRefreshToken(uint64(userId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    10004,

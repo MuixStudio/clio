@@ -16,6 +16,7 @@ func WebCallAuth() gin.HandlerFunc {
 				"code":    10001,
 				"message": "Unauthorized",
 			})
+			c.Abort()
 			return
 		}
 
@@ -26,6 +27,7 @@ func WebCallAuth() gin.HandlerFunc {
 				"code":    10001,
 				"message": "Unauthorized",
 			})
+			c.Abort()
 			return
 		}
 
@@ -35,9 +37,10 @@ func WebCallAuth() gin.HandlerFunc {
 				"code":    10002,
 				"message": "internal server error",
 			})
+			c.Abort()
 			return
 		}
-		c.Set("user_id", uint32(userId))
+		c.Set("user_id", uint64(userId))
 
 		iss, ok := accessTokenClaims["iss"].(string)
 		if !ok {
@@ -45,6 +48,7 @@ func WebCallAuth() gin.HandlerFunc {
 				"code":    10003,
 				"message": "internal server error",
 			})
+			c.Abort()
 			return
 		}
 		c.Set("iss", iss)
