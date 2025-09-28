@@ -54,12 +54,13 @@ func ParseRefreshToken(tokenStr string) (jwt.MapClaims, error) {
 
 func GenerateAccessToken(userID uint32) (string, error) {
 	accessTokenClaims := jwt.MapClaims{
-		"sub": strconv.Itoa(int(userID)),
-		"exp": time.Now().Add(accessTokenExp).Unix(),
-		"iat": time.Now().Unix(),
-		"nbf": time.Now().Unix(),
-		"iss": "clio",
-		"aud": "webcall",
+		"sub":     strconv.Itoa(int(userID)),
+		"exp":     time.Now().Add(accessTokenExp).Unix(),
+		"iat":     time.Now().Unix(),
+		"nbf":     time.Now().Unix(),
+		"iss":     "clio",
+		"aud":     "webcall",
+		"user_id": userID,
 	}
 	accessToken := jwt.NewWithClaims(signingMethod, accessTokenClaims)
 
@@ -72,12 +73,13 @@ func GenerateAccessToken(userID uint32) (string, error) {
 
 func GenerateRefreshToken(userID uint32) (string, error) {
 	refreshTokenClaims := jwt.MapClaims{
-		"sub": strconv.Itoa(int(userID)),
-		"exp": time.Now().Add(refreshTokenExp).Unix(),
-		"iat": time.Now().Unix(),
-		"nbf": time.Now().Unix(),
-		"iss": "clio",
-		"aud": "webcall",
+		"sub":     strconv.Itoa(int(userID)),
+		"exp":     time.Now().Add(refreshTokenExp).Unix(),
+		"iat":     time.Now().Unix(),
+		"nbf":     time.Now().Unix(),
+		"iss":     "clio",
+		"aud":     "webcall",
+		"user_id": userID,
 	}
 	refreshToken := jwt.NewWithClaims(signingMethod, refreshTokenClaims)
 	refreshTokenStr, err := refreshToken.SignedString(refreshTokenSecret)

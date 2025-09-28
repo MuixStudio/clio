@@ -8,15 +8,14 @@ import (
 func Register(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 
 	authHandler := NewAuthHandler(svcCtx)
-
 	r.POST("/logout", authHandler.Logout())
-	r.POST("/refresh_token", authHandler.RefreshToken())
+
 }
 
 func RegisterWithoutAuth(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 
 	authHandler := NewAuthHandler(svcCtx)
-
+	r.POST("/refresh_token", authHandler.RefreshToken())
 	r.POST("/register", authHandler.Register())
 	r.POST("/login", authHandler.Login())
 }
