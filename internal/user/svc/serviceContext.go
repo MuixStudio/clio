@@ -24,7 +24,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Port:     5432,
 		Database: "clio",
 	})
-
+	
 	return &ServiceContext{
 		Config:    c,
 		UserModel: dao.NewUserModel(dbInstance.DB),

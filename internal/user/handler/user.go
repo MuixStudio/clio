@@ -2,7 +2,8 @@ package handler
 
 import (
 	"context"
-	"errors"
+
+	"go-micro.dev/v5/errors"
 
 	"github.com/muixstudio/clio/internal/user/config"
 	"github.com/muixstudio/clio/internal/user/models/dao"
@@ -67,17 +68,16 @@ func (u UserHandler) FindUsers(ctx context.Context, request *user.FindUsersReque
 }
 
 func (u UserHandler) VerifyPassword(ctx context.Context, request *user.VerifyPasswordRequest, response *user.VerifyPasswordResponse) error {
-	username := request.UserName
-	password := request.Password
+
 	us, err := u.svcCtx.UserModel.Find(ctx, &dao.User{
-		UserName: &username,
-		Password: &password,
+		UserName: &request.UserName,
+		Password: &request.Password,
 	}, -1, 1)
 	if err != nil {
 		return err
 	}
 	if len(us) == 0 {
-		return errors.New("user not found")
+		return errors.New("1", "user not found", 11)
 	}
 	response.UserID = us[0].ID
 	return nil

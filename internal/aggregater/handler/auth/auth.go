@@ -30,7 +30,7 @@ func (ah AuthHandler) Login() gin.HandlerFunc {
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    10001,
-				"message": err.Error(),
+				"message": "bind error",
 			})
 			return
 		}
