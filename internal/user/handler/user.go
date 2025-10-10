@@ -2,118 +2,116 @@ package handler
 
 import (
 	"context"
+	"errors"
 
-	"go-micro.dev/v5/errors"
-
-	"github.com/muixstudio/clio/internal/user/config"
+	"github.com/muixstudio/clio/internal/common/pb/userService"
 	"github.com/muixstudio/clio/internal/user/models/dao"
-	"github.com/muixstudio/clio/internal/user/pb/user"
 	"github.com/muixstudio/clio/internal/user/svc"
-	"go-micro.dev/v5/logger"
 )
 
-type UserHandler struct {
+// UserImpl implements the last service interface defined in the IDL.
+type UserImpl struct {
 	svcCtx *svc.ServiceContext
 }
 
-func NewUserHandler(c config.Config) *UserHandler {
-	return &UserHandler{
-		svcCtx: svc.NewServiceContext(c),
+func NewUserImpl(svcCtx *svc.ServiceContext) *UserImpl {
+	return &UserImpl{
+		svcCtx: svcCtx,
 	}
 }
 
-func (u UserHandler) CreateUser(ctx context.Context, request *user.CreateUserRequest, response *user.CreateUserResponse) error {
-	l := dao.LOCAL
-	data := dao.User{
-		Name:         request.Name,
-		UserName:     request.UserName,
-		Password:     request.Password,
-		CountryCode:  request.CountryCode,
-		Phone:        request.Phone,
-		Email:        request.Email,
-		AuthProvider: &l,
-	}
-	err := u.svcCtx.UserModel.Create(ctx, &data)
-	if err != nil {
-		logger.Error(ctx, err)
-		return err
-	}
-	response.Id = data.ID
-	return nil
+// CreateUser implements the UserImpl interface.
+func (s *UserImpl) CreateUser(ctx context.Context, req *userService.CreateUserRequest) (resp *userService.CreateUserResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) CreateUsers(ctx context.Context, request *user.CreateUsersRequest, response *user.CreateUsersResponse) error {
-	//TODO implement me
-	panic("implement me")
+// CreateUsers implements the UserImpl interface.
+func (s *UserImpl) CreateUsers(ctx context.Context, req *userService.CreateUsersRequest) (resp *userService.CreateUsersResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) FindUserByID(ctx context.Context, request *user.FindUserByIDRequest, response *user.FindUserByIDResponse) error {
-	//TODO implement me
-	panic("implement me")
+// FindUserByID implements the UserImpl interface.
+func (s *UserImpl) FindUserByID(ctx context.Context, req *userService.FindUserByIDRequest) (resp *userService.FindUserByIDResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) FindUsersByIDs(ctx context.Context, request *user.FindUsersByIDsRequest, response *user.FindUsersByIDsResponse) error {
-	//TODO implement me
-	panic("implement me")
+// FindUsersByIDs implements the UserImpl interface.
+func (s *UserImpl) FindUsersByIDs(ctx context.Context, req *userService.FindUsersByIDsRequest) (resp *userService.FindUsersByIDsResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) FindUsersByName(ctx context.Context, request *user.FindUsersByNameRequest, response *user.FindUsersByNameResponse) error {
-	//TODO implement me
-	panic("implement me")
+// FindUsersByName implements the UserImpl interface.
+func (s *UserImpl) FindUsersByName(ctx context.Context, req *userService.FindUsersByNameRequest) (resp *userService.FindUsersByNameResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) FindUsers(ctx context.Context, request *user.FindUsersRequest, response *user.FindUsersResponse) error {
-	//TODO implement me
-	panic("implement me")
+// FindUsers implements the UserImpl interface.
+func (s *UserImpl) FindUsers(ctx context.Context, req *userService.FindUsersRequest) (resp *userService.FindUsersResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) VerifyPassword(ctx context.Context, request *user.VerifyPasswordRequest, response *user.VerifyPasswordResponse) error {
-
-	us, err := u.svcCtx.UserModel.Find(ctx, &dao.User{
-		UserName: &request.UserName,
-		Password: &request.Password,
+// VerifyPassword implements the UserImpl interface.
+func (s *UserImpl) VerifyPassword(ctx context.Context, req *userService.VerifyPasswordRequest) (resp *userService.VerifyPasswordResponse, err error) {
+	us, err := s.svcCtx.UserModel.Find(ctx, &dao.User{
+		UserName: &req.UserName,
+		Password: &req.Password,
 	}, -1, 1)
 	if err != nil {
-		return err
+		return &userService.VerifyPasswordResponse{}, err
 	}
 	if len(us) == 0 {
-		return errors.New("1", "user not found", 11)
+		return &userService.VerifyPasswordResponse{}, errors.New("user not found")
 	}
-	response.UserID = us[0].ID
-	return nil
+
+	return &userService.VerifyPasswordResponse{
+		UserID: us[0].ID,
+	}, nil
 }
 
-func (u UserHandler) DeleteUser(ctx context.Context, request *user.DeleteUserRequest, response *user.DeleteUserResponse) error {
-	//TODO implement me
-	panic("implement me")
+// DeleteUser implements the UserImpl interface.
+func (s *UserImpl) DeleteUser(ctx context.Context, req *userService.DeleteUserRequest) (resp *userService.DeleteUserResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) DeleteUsers(ctx context.Context, request *user.DeleteUsersRequest, response *user.DeleteUsersResponse) error {
-	//TODO implement me
-	panic("implement me")
+// DeleteUsers implements the UserImpl interface.
+func (s *UserImpl) DeleteUsers(ctx context.Context, req *userService.DeleteUsersRequest) (resp *userService.DeleteUsersResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) UpdateEmail(ctx context.Context, request *user.UpdateUserEmailRequest, response *user.UpdateUserEmailResponse) error {
-	//TODO implement me
-	panic("implement me")
+// UpdateEmail implements the UserImpl interface.
+func (s *UserImpl) UpdateEmail(ctx context.Context, req *userService.UpdateUserEmailRequest) (resp *userService.UpdateUserEmailResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) UpdateName(ctx context.Context, request *user.UpdateNameRequest, response *user.UpdateNameResponse) error {
-	//TODO implement me
-	panic("implement me")
+// UpdateName implements the UserImpl interface.
+func (s *UserImpl) UpdateName(ctx context.Context, req *userService.UpdateNameRequest) (resp *userService.UpdateNameResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) UpdateUserName(ctx context.Context, request *user.UpdateUserNameRequest, response *user.UpdateUserNameResponse) error {
-	//TODO implement me
-	panic("implement me")
+// UpdateUserName implements the UserImpl interface.
+func (s *UserImpl) UpdateUserName(ctx context.Context, req *userService.UpdateUserNameRequest) (resp *userService.UpdateUserNameResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) UpdatePhone(ctx context.Context, request *user.UpdateUserPhoneRequest, response *user.UpdateUserPhoneResponse) error {
-	//TODO implement me
-	panic("implement me")
+// UpdatePhone implements the UserImpl interface.
+func (s *UserImpl) UpdatePhone(ctx context.Context, req *userService.UpdateUserPhoneRequest) (resp *userService.UpdateUserPhoneResponse, err error) {
+	// TODO: Your code here...
+	return
 }
 
-func (u UserHandler) ChangeAdminStatus(ctx context.Context, request *user.ChangeAdminStatusRequest, response *user.ChangeAdminStatusResponse) error {
-	//TODO implement me
-	panic("implement me")
+// ChangeAdminStatus implements the UserImpl interface.
+func (s *UserImpl) ChangeAdminStatus(ctx context.Context, req *userService.ChangeAdminStatusRequest) (resp *userService.ChangeAdminStatusResponse, err error) {
+	// TODO: Your code here...
+	return
 }

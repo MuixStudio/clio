@@ -3,19 +3,15 @@ package svc
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/muixstudio/clio/internal/user/pb/user"
+	"github.com/cloudwego/kitex/client"
+	"github.com/muixstudio/clio/internal/common/pb/userService/user"
 	"github.com/redis/go-redis/v9"
-	"go-micro.dev/v5/transport/grpc"
-
-	//"go-micro.dev/v5"
-	"go-micro.dev/v5/client"
 )
 
 type ServiceContext struct {
 	RDB         *redis.Client
-	UserService user.UserService
+	UserService user.Client
 }
 
 func NewServiceContext() *ServiceContext {
@@ -33,11 +29,11 @@ func NewServiceContext() *ServiceContext {
 
 	fmt.Println("Redis connect success!")
 
-	grpcTransport := grpc.NewTransport()
+	//grpcTransport := grpc.NewTransport()
 	//origArgs := os.Args
 	//defer func() { os.Args = origArgs }()
 	//os.Args = []string{"user.client"}
-
+	//
 	//service := micro.NewService(
 	//	micro.Name("aggregater.client"),
 	//	micro.Version("0.0.1"),
@@ -48,19 +44,24 @@ func NewServiceContext() *ServiceContext {
 	//
 	//c := service.Client()
 	//
+	//err = c.Init(
+	//	client.Transport(grpcTransport),
+	//	client.PoolTTL(time.Second*20),
+	//	client.PoolSize(11),
+	//	client.PoolCloseTimeout(time.Second*10),
+	//	client.DialTimeout(time.Second*10),
+	//)
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	c := client.NewClient()
-	err = c.Init(
-		client.Transport(grpcTransport),
-		client.PoolTTL(time.Second*20),
-		client.PoolSize(11),
-		client.PoolCloseTimeout(time.Second*10),
-	)
+	userClient, err := user.NewClient("userServiceInfo", client.WithHostPorts("127.0.0.1:8888"))
+
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to new client: %s", err)
 	}
 
-	userService := user.NewUserService("user.User", c)
+	userService := userClient
 	return &ServiceContext{
 		RDB:         rdb,
 		UserService: userService,

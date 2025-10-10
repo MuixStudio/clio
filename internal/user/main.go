@@ -1,44 +1,40 @@
 package main
 
 import (
-	"os"
+	"context"
+	"log"
 
+	"github.com/cloudwego/kitex/pkg/klog"
+	"github.com/cloudwego/kitex/server"
+	"github.com/muixstudio/clio/internal/common/pb/userService/profile"
+	"github.com/muixstudio/clio/internal/common/pb/userService/user"
 	"github.com/muixstudio/clio/internal/user/config"
 	"github.com/muixstudio/clio/internal/user/handler"
-	"github.com/muixstudio/clio/internal/user/pb/user"
-	"go-micro.dev/v5"
-	"go-micro.dev/v5/logger"
-	"go-micro.dev/v5/transport/grpc"
+	"github.com/muixstudio/clio/internal/user/svc"
 )
 
 func main() {
-	grpcTransport := grpc.NewTransport()
 
-	// 创建服务
-	service := micro.NewService(
-		micro.Name("user.User"),
-		micro.Version("0.0.1"),
+	svr := server.NewServer(
+		server.WithErrorHandler(func(ctx context.Context, err error) error {
+			klog.CtxErrorf(ctx, "%v", err)
+			return err
+		}),
+		//server.WithTransHandlerFactory(remote.ServerTransHandlerFactory()),
 	)
 
-	// 初始化
-	service.Init(
-		micro.Transport(grpcTransport),
-		micro.Logger(logger.NewLogger(
-			logger.WithLevel(logger.TraceLevel),
-			logger.WithOutput(os.Stdout),
-		)),
-	)
+	c := config.Config{}
 
-	// 注册 handler
-	var c config.Config
-	err := user.RegisterUserHandler(service.Server(), handler.NewUserHandler(c))
+	svcCtx := svc.NewServiceContext(c)
+
+	err := svr.RegisterService(user.NewServiceInfo(), handler.NewUserImpl(svcCtx))
+	err = svr.RegisterService(profile.NewServiceInfo(), new(handler.ProfileImpl))
+
+	klog.SetLevel(klog.LevelDebug)
+
+	err = svr.Run()
 
 	if err != nil {
-		logger.Fatal(err)
-	}
-
-	// 运行服务
-	if err = service.Run(); err != nil {
-		logger.Fatal(err)
+		log.Println(err.Error())
 	}
 }

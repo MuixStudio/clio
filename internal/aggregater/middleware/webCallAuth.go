@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/aggregater/utils"
+	"github.com/muixstudio/clio/internal/aggregater/utils/jwt"
 )
 
 func WebCallAuth() gin.HandlerFunc {
@@ -21,7 +21,7 @@ func WebCallAuth() gin.HandlerFunc {
 		}
 
 		// Parse access_token
-		accessTokenClaims, err := utils.ParseAccessToken(accessToken)
+		accessTokenClaims, err := jwt.ParseAccessToken(accessToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    10001,

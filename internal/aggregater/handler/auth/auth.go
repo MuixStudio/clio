@@ -8,8 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/muixstudio/clio/internal/aggregater/svc"
-	"github.com/muixstudio/clio/internal/aggregater/utils"
-	"github.com/muixstudio/clio/internal/user/pb/user"
+	"github.com/muixstudio/clio/internal/aggregater/utils/jwt"
+	"github.com/muixstudio/clio/internal/aggregater/utils/parse"
+	"github.com/muixstudio/clio/internal/aggregater/utils/response"
+	"github.com/muixstudio/clio/internal/common/pb/userService"
 )
 
 type AuthHandler struct {
@@ -27,51 +29,23 @@ func (ah AuthHandler) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 解析参数
 		var req LoginReq
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    10001,
-				"message": "bind error",
-			})
+		if err := parse.Parse(c, &req); err != nil {
+			response.FailH(c, err)
 			return
 		}
 		//业务逻辑
 		resp, err := ah.loginLogic(c, req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    10001,
-				"message": err.Error(),
-			})
+			response.FailH(c, err)
 			return
 		}
-		accessTokenStr, err := utils.GenerateAccessToken(resp.UserID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    10001,
-				"message": err.Error(),
-			})
-			return
-		}
-		refreshTokenStr, err := utils.GenerateRefreshToken(resp.UserID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    10001,
-				"message": err.Error(),
-			})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"code":    0,
-			"message": "ok",
-			"data": gin.H{
-				"access_token":  accessTokenStr,
-				"refresh_token": refreshTokenStr,
-			},
-		})
+		response.SuccessWithData(c, resp)
 	}
 }
 
 func (ah AuthHandler) loginLogic(c context.Context, req LoginReq) (LoginResp, error) {
-	resp, err := ah.svcCtx.UserService.VerifyPassword(c, &user.VerifyPasswordRequest{
+
+	resp, err := ah.svcCtx.UserService.VerifyPassword(c, &userService.VerifyPasswordRequest{
 		UserName: req.Username,
 		Password: req.Password,
 	})
@@ -80,8 +54,19 @@ func (ah AuthHandler) loginLogic(c context.Context, req LoginReq) (LoginResp, er
 	}
 	key := fmt.Sprintf("/auth/%d/sessions", resp.UserID)
 	ah.svcCtx.RDB.Set(c, key, resp.UserID, time.Hour)
+
+	accessTokenStr, err := jwt.GenerateAccessToken(resp.UserID)
+	if err != nil {
+		return LoginResp{}, err
+	}
+	refreshTokenStr, err := jwt.GenerateRefreshToken(resp.UserID)
+	if err != nil {
+		return LoginResp{}, err
+	}
+
 	return LoginResp{
-		UserID: resp.UserID,
+		AccessToken:  accessTokenStr,
+		RefreshToken: refreshTokenStr,
 	}, nil
 }
 
@@ -112,7 +97,7 @@ func (ah AuthHandler) RefreshToken() gin.HandlerFunc {
 
 		//--------
 
-		refreshTokenClaims, err := utils.ParseRefreshToken(refreshToken)
+		refreshTokenClaims, err := jwt.ParseRefreshToken(refreshToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    10001,
@@ -130,7 +115,7 @@ func (ah AuthHandler) RefreshToken() gin.HandlerFunc {
 			return
 		}
 
-		accessTokenStr, err := utils.GenerateAccessToken(uint64(userId))
+		accessTokenStr, err := jwt.GenerateAccessToken(uint64(userId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    10003,
@@ -138,7 +123,7 @@ func (ah AuthHandler) RefreshToken() gin.HandlerFunc {
 			})
 			return
 		}
-		refreshTokenStr, err := utils.GenerateRefreshToken(uint64(userId))
+		refreshTokenStr, err := jwt.GenerateRefreshToken(uint64(userId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    10004,

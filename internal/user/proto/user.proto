@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package user;
-option go_package="pb/user";
+package userService;
+option go_package="pb/userService";
 
 // User service provides CRUD operations, search, authentication verification,
 // and administrative state changes for user entities.

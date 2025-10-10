@@ -2,11 +2,11 @@ package auth
 
 type (
 	LoginReq struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username string `json:"username" validate:"required"`
+		Password string `json:"password" validate:"required"`
 	}
 	LoginResp struct {
-		Username string `json:"username"`
-		UserID   uint64 `json:"userId"`
+		AccessToken  string
+		RefreshToken string
 	}
 )

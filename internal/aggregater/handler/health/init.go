@@ -7,7 +7,7 @@ import (
 
 func RegisterWithoutAuth(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 
-	authHandler := NewHealthCheckHandler(svcCtx)
+	healthCheckHandler := NewHealthCheckHandler(svcCtx)
 
-	r.GET("/health_check", authHandler.HealthCheck())
+	r.GET("/health_check", healthCheckHandler.HealthCheck())
 }

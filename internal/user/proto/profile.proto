@@ -1,4 +1,23 @@
 syntax = "proto3";
 
-package profile;
-option go_package="pb/profile";
+package userService;
+option go_package="pb/userService";
+
+
+service Profile {
+  rpc FindUserProfile (FindUserProfileRequest) returns (FindUserProfileResponse);
+}
+
+message FindUserProfileRequest {
+  optional uint64 id = 1;
+}
+
+message FindUserProfileResponse {
+  uint64 id = 1;
+  string name = 2;
+  string userName = 3;
+  string countryCode = 4;
+  string phone = 5;
+  string email = 6;
+  bool isAdmin = 7;
+}

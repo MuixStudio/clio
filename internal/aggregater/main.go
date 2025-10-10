@@ -8,6 +8,7 @@ import (
 func main() {
 
 	r := gin.Default()
+	gin.DisableBindValidation()
 
 	handler.Register(&r.RouterGroup)
 
