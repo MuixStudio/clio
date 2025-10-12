@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cloudwego/kitex/client"
-	"github.com/muixstudio/clio/internal/common/pb/userService/user"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/muixstudio/clio/internal/common/pb/userService"
 	"github.com/redis/go-redis/v9"
 )
 
 type ServiceContext struct {
 	RDB         *redis.Client
-	UserService user.Client
+	UserService userService.UserClient
 }
 
 func NewServiceContext() *ServiceContext {
@@ -29,41 +29,19 @@ func NewServiceContext() *ServiceContext {
 
 	fmt.Println("Redis connect success!")
 
-	//grpcTransport := grpc.NewTransport()
-	//origArgs := os.Args
-	//defer func() { os.Args = origArgs }()
-	//os.Args = []string{"user.client"}
-	//
-	//service := micro.NewService(
-	//	micro.Name("aggregater.client"),
-	//	micro.Version("0.0.1"),
-	//)
-	//service.Init(
-	//	micro.Transport(grpcTransport),
-	//)
-	//
-	//c := service.Client()
-	//
-	//err = c.Init(
-	//	client.Transport(grpcTransport),
-	//	client.PoolTTL(time.Second*20),
-	//	client.PoolSize(11),
-	//	client.PoolCloseTimeout(time.Second*10),
-	//	client.DialTimeout(time.Second*10),
-	//)
-	//if err != nil {
-	//	panic(err)
-	//}
+	userClient, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint("127.0.0.1:9017"),
+	)
 
-	userClient, err := user.NewClient("userServiceInfo", client.WithHostPorts("127.0.0.1:8888"))
+	userSvc := userService.NewUserClient(userClient)
 
 	if err != nil {
 		fmt.Printf("failed to new client: %s", err)
 	}
 
-	userService := userClient
 	return &ServiceContext{
 		RDB:         rdb,
-		UserService: userService,
+		UserService: userSvc,
 	}
 }

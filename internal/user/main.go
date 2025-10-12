@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"log"
 
-	"github.com/cloudwego/kitex/pkg/klog"
-	"github.com/cloudwego/kitex/server"
-	"github.com/muixstudio/clio/internal/common/pb/userService/profile"
-	"github.com/muixstudio/clio/internal/common/pb/userService/user"
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/muixstudio/clio/internal/common/pb/userService"
 	"github.com/muixstudio/clio/internal/user/config"
 	"github.com/muixstudio/clio/internal/user/handler"
 	"github.com/muixstudio/clio/internal/user/svc"
@@ -15,24 +13,21 @@ import (
 
 func main() {
 
-	svr := server.NewServer(
-		server.WithErrorHandler(func(ctx context.Context, err error) error {
-			klog.CtxErrorf(ctx, "%v", err)
-			return err
-		}),
-		//server.WithTransHandlerFactory(remote.ServerTransHandlerFactory()),
-	)
-
 	c := config.Config{}
 
 	svcCtx := svc.NewServiceContext(c)
 
-	err := svr.RegisterService(user.NewServiceInfo(), handler.NewUserImpl(svcCtx))
-	err = svr.RegisterService(profile.NewServiceInfo(), new(handler.ProfileImpl))
+	gs := grpc.NewServer(
+		grpc.Address(":9017"),
+	)
 
-	klog.SetLevel(klog.LevelDebug)
-
-	err = svr.Run()
+	userService.RegisterUserServer(gs, handler.NewUserHandler(svcCtx))
+	app := kratos.New(
+		kratos.Name("user"),
+		kratos.Version("v1.0.0"),
+		kratos.Server(gs),
+	)
+	err := app.Run()
 
 	if err != nil {
 		log.Println(err.Error())

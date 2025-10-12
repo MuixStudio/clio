@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/muixstudio/clio/internal/aggregater/svc"
 	"github.com/muixstudio/clio/internal/aggregater/utils/jwt"
 	"github.com/muixstudio/clio/internal/aggregater/utils/parse"
@@ -27,7 +28,7 @@ func NewAuthHandler(svcCtx *svc.ServiceContext) *AuthHandler {
 func (ah AuthHandler) Login() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-		// 解析参数
+		// 解析并验证参数
 		var req LoginReq
 		if err := parse.Parse(c, &req); err != nil {
 			response.FailH(c, err)
@@ -39,6 +40,7 @@ func (ah AuthHandler) Login() gin.HandlerFunc {
 			response.FailH(c, err)
 			return
 		}
+		log.Info("login success")
 		response.SuccessWithData(c, resp)
 	}
 }

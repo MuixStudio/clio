@@ -3,8 +3,8 @@ package logger
 import (
 	"time"
 
-	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/gin-gonic/gin"
+	"github.com/go-kratos/kratos/v2/log"
 )
 
 // Skipper is a function to skip logs based on provided Context
@@ -78,6 +78,9 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		//param.Path = path
 		//klog.Ctx
 		//klog.Control()
-		klog.Infof("request: %s, keys: %v, start: %v, raw: %v", c.Request, c.Keys, start, raw)
+		log.With(log.GetLogger(),
+			"start", start,
+			"raw", raw,
+		).Log(log.LevelInfo, "http request")
 	}
 }
