@@ -1,8 +1,6 @@
 package logger
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -42,9 +40,9 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		// Start timer
-		start := time.Now()
+		//start := time.Now()
 		path := c.Request.URL.Path
-		raw := c.Request.URL.RawQuery
+		//raw := c.Request.URL.RawQuery
 
 		// Process request
 		c.Next()
@@ -78,9 +76,13 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		//param.Path = path
 		//klog.Ctx
 		//klog.Control()
-		log.With(log.GetLogger(),
-			"start", start,
-			"raw", raw,
-		).Log(log.LevelInfo, "http request")
+		//log.With(log.GetLogger(),
+		//	"start", start,
+		//	"raw", raw,
+		//).Log(log.LevelInfo, "http request")
+		mp := make(map[string]interface{})
+		mp["a"] = 1
+		mp["b"] = 2
+		log.Infow("wwww", mp)
 	}
 }
