@@ -9,6 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/muixstudio/clio/internal/aggregater/handler"
 	"github.com/muixstudio/clio/internal/aggregater/middleware/logger"
+	ginMiddleware "github.com/muixstudio/clio/internal/aggregater/middleware/metrics"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -59,12 +60,6 @@ func main() {
 
 	httpSrv := http.NewServer(
 		http.Address(":5020"),
-		http.Middleware(
-			metrics.Server(
-				metrics.WithSeconds(_metricSeconds),
-				metrics.WithRequests(_metricRequests),
-			),
-		),
 	)
 
 	r := initGinRouter()
@@ -96,7 +91,10 @@ func main() {
 
 func initGinRouter() *gin.Engine {
 	r := gin.New()
-	r.Use(logger.Logger())
+	r.Use(
+		logger.Logger(),
+		ginMiddleware.Metrics("clio"),
+	)
 
 	gin.DisableBindValidation()
 	gin.SetMode(gin.ReleaseMode)
