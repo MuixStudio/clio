@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muixstudio/clio/internal/aggregater/handler/auth"
 	"github.com/muixstudio/clio/internal/aggregater/handler/health"
-	"github.com/muixstudio/clio/internal/aggregater/handler/metrics"
 	"github.com/muixstudio/clio/internal/aggregater/handler/user"
 	"github.com/muixstudio/clio/internal/aggregater/middleware"
 	"github.com/muixstudio/clio/internal/aggregater/middleware/cors"
@@ -30,7 +29,6 @@ func Register(r *gin.RouterGroup) {
 	webCallWithoutAuth := r.Group("")
 	auth.RegisterWithoutAuth(webCallWithoutAuth, svcCtx)
 	health.RegisterWithoutAuth(webCallWithoutAuth, svcCtx)
-	metrics.RegisterWithoutAuth(webCallWithoutAuth, svcCtx)
 
 	webCall := r.Group("")
 	webCall.Use(middleware.WebCallAuth())

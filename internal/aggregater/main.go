@@ -1,33 +1,16 @@
 package main
 
 import (
-	"context"
-
 	"github.com/gin-gonic/gin"
 	kzap "github.com/go-kratos/kratos/contrib/log/zap/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/muixstudio/clio/internal/aggregater/handler"
 	"github.com/muixstudio/clio/internal/aggregater/middleware/logger"
 	ginMiddleware "github.com/muixstudio/clio/internal/aggregater/middleware/metrics"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
-	"go.opentelemetry.io/otel/metric"
-	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	mm "github.com/muixstudio/clio/internal/aggregater/svc/metric"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-)
-
-var (
-	// Name is the name of the compiled software.
-	Name = "metrics"
-	// Version is the version of the compiled software.
-	// Version = "v1.0.0"
-
-	_metricRequests metric.Int64Counter
-	_metricSeconds  metric.Float64Histogram
 )
 
 type testWriteSyncer struct {
@@ -45,22 +28,7 @@ func (x *testWriteSyncer) Sync() error {
 
 func main() {
 
-	exporter, err := initMetricsExporter(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter)))
-	meter := provider.Meter(Name)
-
-	_metricRequests, err = metrics.DefaultRequestsCounter(meter, metrics.DefaultServerRequestsCounterName)
-	if err != nil {
-		panic(err)
-	}
-
-	_metricSeconds, err = metrics.DefaultSecondsHistogram(meter, metrics.DefaultServerSecondsHistogramName)
-	if err != nil {
-		panic(err)
-	}
+	_ = mm.NewAppMetrics()
 
 	httpSrv := http.NewServer(
 		http.Address(":5020"),
@@ -105,28 +73,4 @@ func initGinRouter() *gin.Engine {
 
 	handler.Register(&r.RouterGroup)
 	return r
-}
-
-func initMetricsExporter(ctx context.Context) (sdkmetric.Exporter, error) {
-	// 配置 OTLP endpoint
-	// 默认端点: localhost:4317 (gRPC)
-	// 如果使用 HTTP: localhost:4318
-
-	conn, err := grpc.NewClient(
-		"localhost:4317", // OTLP gRPC endpoint
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	exporter, err := otlpmetricgrpc.New(
-		ctx,
-		otlpmetricgrpc.WithGRPCConn(conn),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return exporter, nil
 }

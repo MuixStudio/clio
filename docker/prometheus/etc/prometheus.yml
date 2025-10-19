@@ -1,11 +1,39 @@
 global:
-  scrape_interval: 10s
-#   external_labels:
-#     stack: "apisix"
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# remote_write:
+# - url: "http://localhost:9090/api/v1/write" # 远程存储端点
+#   # 可选：添加认证
+#   # basic_auth:
+#   #   username: "user"
+#   #   password: "password"
+#   # 或使用 bearer token
+#   # bearer_token: "your-token"
+#   # bearer_token_file: /path/to/token
+
+#   # 可选：配置重试和队列
+#   queue_config:
+#     capacity: 10000
+#     max_shards: 50
+#     min_shards: 1
+#     max_samples_per_send: 5000
+#     batch_send_deadline: 5s
+#     min_backoff: 30ms
+#     max_backoff: 100ms
+
+#   # 可选：写入超时
+#   remote_timeout: 30s
+
+#   # 可选：元数据配置
+#   metadata_config:
+#     send: true
+#     send_interval: 1m
+
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: "prometheus"
-    # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 5s
-    static_configs:
-      - targets: ["localhost:9090"]
+# The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+- job_name: "prometheus"
+  # Override the global default and scrape targets from this job every 5 seconds.
+  scrape_interval: 5s
+  static_configs:
+  - targets: [ "localhost:9090" ]
