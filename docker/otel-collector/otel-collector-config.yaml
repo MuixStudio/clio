@@ -5,24 +5,23 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+
 processors:
   batch:
-
   resource:
     attributes:
-      - key: service.instance.id
-        from_attribute: service.instance.id
-        action: upsert
-      - key: instance
-        from_attribute: service.instance.id
-        action: upsert
-
+    - key: service.instance.id
+      from_attribute: service.instance.id
+      action: upsert
+    - key: instance
+      from_attribute: service.instance.id
+      action: upsert
 
 exporters:
+  # metric
   prometheus:
     endpoint: 0.0.0.0:8889
     namespace: default
-
   prometheusremotewrite:
     endpoint: "http://prometheus:9090/api/v1/write"
     max_batch_request_parallelism: 5 # 控制并发请求数
@@ -33,6 +32,16 @@ exporters:
       insecure: true
     resource_to_telemetry_conversion:
       enabled: true
+  # trace
+  otlp/tempo:
+    endpoint: "tempo:4317"
+    tls:
+      insecure: true
+  # logs
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
+    tls:
+      insecure: true
 
 extensions:
   health_check:
@@ -49,10 +58,10 @@ service:
   #     level: detailed
   extensions: [ health_check, pprof, zpages ]
   pipelines:
-    #     traces:
-    #       receivers: [otlp]
-    #       processors: [batch]
-    #       exporters: [otlp]
+    traces:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ otlp/tempo ]
     metrics:
       receivers: [ otlp ]
       processors: [ resource, batch ]

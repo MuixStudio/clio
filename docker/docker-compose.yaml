@@ -83,21 +83,6 @@ services:
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
 
-  otel-collector:
-    container_name: clio-otel-collector
-    image: otel/opentelemetry-collector-contrib
-    environment:
-      TZ: ${TIMEZONE:-Asia/Shanghai}
-    volumes:
-      - ./otel-collector/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
-    ports:
-      - 1888:1888 # pprof extension
-      - 8888:8888 # Prometheus metrics exposed by the Collector
-      - 8889:8889 # Prometheus exporter metrics
-      - 13133:13133 # health_check extension
-      - 4317:4317 # OTLP gRPC receiver
-      - 4318:4318 # OTLP http receiver
-
   nginx:
     container_name: clio-nginx
     image: nginx:latest
@@ -157,17 +142,56 @@ services:
       timeout: 20s
       retries: 3
 
+  otel-collector:
+    container_name: clio-otel-collector
+    image: otel/opentelemetry-collector-contrib
+    environment:
+      TZ: ${TIMEZONE:-Asia/Shanghai}
+    volumes:
+      - ./otel-collector/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+
+  loki:
+    container_name: clio-loki
+    image: grafana/loki:3.5
+    environment:
+      TZ: ${TIMEZONE:-Asia/Shanghai}
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./loki/etc/config.yml:/etc/loki/config.yaml
+      - ./loki/data/loki:/tmp/loki
+
+  tempo:
+    container_name: clio-tempo
+    image: grafana/tempo:2.9.0
+    environment:
+      TZ: ${TIMEZONE:-Asia/Shanghai}
+    command: ["-config.file=/etc/config.yaml"]
+    volumes:
+      - ./tempo/etc/config.yml:/etc/config.yaml
+      - ./tempo/data/tempo:/var/tempo
+
   prometheus:
     container_name: clio-prometheus
     image: prom/prometheus:v3.5.0
+    environment:
+      TZ: ${TIMEZONE:-Asia/Shanghai}
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--web.enable-remote-write-receiver'
       - '--enable-feature=native-histograms'   # 启用原生直方图
       # - '--storage.tsdb.out-of-order-time-window=30m' # ✅ 允许 30 分钟内的乱序数据
     restart: always
-    environment:
-      TZ: ${TIMEZONE:-Asia/Shanghai}
     volumes:
       - ./prometheus/etc/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -187,6 +211,10 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
 
 networks:
   # create a network between sandbox, api and ssrf_proxy, and can not access outside.

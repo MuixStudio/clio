@@ -9,7 +9,7 @@ import (
 	"github.com/muixstudio/clio/internal/aggregater/handler"
 	"github.com/muixstudio/clio/internal/aggregater/middleware/logger"
 	ginMiddleware "github.com/muixstudio/clio/internal/aggregater/middleware/metrics"
-	mm "github.com/muixstudio/clio/internal/aggregater/svc/metric"
+	mm "github.com/muixstudio/clio/internal/aggregater/svc/observability"
 	"go.uber.org/zap"
 )
 
@@ -27,9 +27,7 @@ func (x *testWriteSyncer) Sync() error {
 }
 
 func main() {
-
-	_ = mm.NewAppMetrics()
-
+	mm.InitMeterProvider()
 	httpSrv := http.NewServer(
 		http.Address(":5020"),
 	)

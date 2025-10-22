@@ -13,3 +13,5 @@ docker/redis/data/*
 docker/nginx/ssl/*
 docker/nginx/conf.d/*.conf
 docker/etcd/*
+docker/loki/data/*
+docker/tempo/data/*
