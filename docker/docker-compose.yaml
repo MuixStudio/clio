@@ -180,6 +180,8 @@ services:
     volumes:
       - ./tempo/etc/config.yml:/etc/config.yaml
       - ./tempo/data/tempo:/var/tempo
+    ports:
+      - 3200:3200
 
   prometheus:
     container_name: clio-prometheus
