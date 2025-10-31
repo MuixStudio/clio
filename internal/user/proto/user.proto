@@ -132,8 +132,8 @@ message FindUsersResponse {
 // VerifyPasswordRequest validates credentials for local users.
 // Security note: must be sent only over TLS; avoid logging sensitive fields.
 message VerifyPasswordRequest {
-  string userName = 1;                                  // Username to verify
-  string password = 2;                                  // Plaintext password (to be hashed server-side)
+  optional string userName = 1;                         // Username to verify
+  optional string password = 2;                         // Plaintext password (to be hashed server-side)
 }
 
 message VerifyPasswordResponse {

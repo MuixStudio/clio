@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/aggregater/svc"
+	"github.com/muixstudio/clio/internal/web/svc"
 )
 
 func Register(r *gin.RouterGroup, svcCtx *svc.ServiceContext) {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/aggregater/utils/jwt"
+	"github.com/muixstudio/clio/internal/web/utils/jwt"
 )
 
 func WebCallAuth() gin.HandlerFunc {

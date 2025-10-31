@@ -139,6 +139,7 @@ type (
 		Update(ctx context.Context, data *User) error
 		UpdateInBatches(ctx context.Context, data []*User) error
 
+		Take(ctx context.Context, data *User) (*User, error)
 		Find(ctx context.Context, data *User, offset int, limit int) ([]*User, error)
 		Count(ctx context.Context, data *User) (int64, error)
 
@@ -200,6 +201,12 @@ func (d defaultUserModel) UpdateInBatches(ctx context.Context, data []*User) err
 		return nil
 	}
 	return d.db.WithContext(ctx).Transaction(callFc)
+}
+
+func (d defaultUserModel) Take(ctx context.Context, data *User) (*User, error) {
+	records := &User{}
+	res := d.db.WithContext(ctx).Where(data).Take(records)
+	return records, res.Error
 }
 
 func (d defaultUserModel) Find(ctx context.Context, data *User, offset int, limit int) ([]*User, error) {

@@ -794,8 +794,8 @@ func (x *FindUsersResponse) GetTotal() int64 {
 // Security note: must be sent only over TLS; avoid logging sensitive fields.
 type VerifyPasswordRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserName      string                 `protobuf:"bytes,1,opt,name=userName,proto3" json:"userName,omitempty"` // Username to verify
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"` // Plaintext password (to be hashed server-side)
+	UserName      *string                `protobuf:"bytes,1,opt,name=userName,proto3,oneof" json:"userName,omitempty"` // Username to verify
+	Password      *string                `protobuf:"bytes,2,opt,name=password,proto3,oneof" json:"password,omitempty"` // Plaintext password (to be hashed server-side)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -831,15 +831,15 @@ func (*VerifyPasswordRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *VerifyPasswordRequest) GetUserName() string {
-	if x != nil {
-		return x.UserName
+	if x != nil && x.UserName != nil {
+		return *x.UserName
 	}
 	return ""
 }
 
 func (x *VerifyPasswordRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
+	if x != nil && x.Password != nil {
+		return *x.Password
 	}
 	return ""
 }
@@ -1588,10 +1588,12 @@ const file_proto_user_proto_rawDesc = "" +
 	"\b_isAdmin\"V\n" +
 	"\x11FindUsersResponse\x12+\n" +
 	"\x05users\x18\x01 \x03(\v2\x15.userService.UserItemR\x05users\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"O\n" +
-	"\x15VerifyPasswordRequest\x12\x1a\n" +
-	"\buserName\x18\x01 \x01(\tR\buserName\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"@\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"s\n" +
+	"\x15VerifyPasswordRequest\x12\x1f\n" +
+	"\buserName\x18\x01 \x01(\tH\x00R\buserName\x88\x01\x01\x12\x1f\n" +
+	"\bpassword\x18\x02 \x01(\tH\x01R\bpassword\x88\x01\x01B\v\n" +
+	"\t_userNameB\v\n" +
+	"\t_password\"@\n" +
 	"\x16VerifyPasswordResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x16\n" +
 	"\x06userID\x18\x02 \x01(\x04R\x06userID\"#\n" +
@@ -1734,6 +1736,7 @@ func file_proto_user_proto_init() {
 	}
 	file_proto_user_proto_msgTypes[1].OneofWrappers = []any{}
 	file_proto_user_proto_msgTypes[11].OneofWrappers = []any{}
+	file_proto_user_proto_msgTypes[13].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

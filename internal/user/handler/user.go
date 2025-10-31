@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
+	kratosErrors "github.com/go-kratos/kratos/v2/errors"
 	"github.com/muixstudio/clio/internal/common/pb/userService"
 	"github.com/muixstudio/clio/internal/user/models/dao"
-
-	//"github.com/muixstudio/clio/internal/user/models/dao"
 	"github.com/muixstudio/clio/internal/user/svc"
+	"gorm.io/gorm"
 )
 
 type UserHandler struct {
@@ -68,18 +68,21 @@ func (u UserHandler) FindUsers(ctx context.Context, request *userService.FindUse
 }
 
 func (u UserHandler) VerifyPassword(ctx context.Context, request *userService.VerifyPasswordRequest) (*userService.VerifyPasswordResponse, error) {
-	us, err := u.svcCtx.UserModel.Find(ctx, &dao.User{
-		UserName: &request.UserName,
-		Password: &request.Password,
-	}, -1, 1)
-	if err != nil {
-		return &userService.VerifyPasswordResponse{}, err
+	if request.UserName == nil {
+		return &userService.VerifyPasswordResponse{}, kratosErrors.BadRequest("BAD_REQUEST", "userName is required")
 	}
-	if len(us) == 0 {
-		return &userService.VerifyPasswordResponse{}, errors.New("user not found")
+	user, err := u.svcCtx.UserModel.Take(ctx, &dao.User{
+		UserName: request.UserName,
+		Password: request.Password,
+	})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return &userService.VerifyPasswordResponse{}, kratosErrors.New(404, "INVALID_USERNAME_OR_PASSWORD", "invalid username or password").WithCause(err)
+		}
+		return &userService.VerifyPasswordResponse{}, kratosErrors.InternalServer("INTERNAL_SERVER_ERROR", "internal server error").WithCause(err)
 	}
 	return &userService.VerifyPasswordResponse{
-		UserID: us[0].ID,
+		UserID: user.ID,
 	}, nil
 }
 

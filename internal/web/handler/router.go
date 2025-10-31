@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/aggregater/handler/auth"
-	"github.com/muixstudio/clio/internal/aggregater/handler/health"
-	"github.com/muixstudio/clio/internal/aggregater/handler/user"
-	"github.com/muixstudio/clio/internal/aggregater/middleware"
-	"github.com/muixstudio/clio/internal/aggregater/middleware/cors"
-	"github.com/muixstudio/clio/internal/aggregater/svc"
+	"github.com/muixstudio/clio/internal/web/handler/auth"
+	"github.com/muixstudio/clio/internal/web/handler/health"
+	"github.com/muixstudio/clio/internal/web/handler/user"
+	"github.com/muixstudio/clio/internal/web/middleware"
+	"github.com/muixstudio/clio/internal/web/middleware/cors"
+	"github.com/muixstudio/clio/internal/web/svc"
 )
 
 func Register(r *gin.RouterGroup) {

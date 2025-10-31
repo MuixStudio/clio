@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	"github.com/go-kratos/kratos/v2"
@@ -26,6 +28,10 @@ func main() {
 		kratos.Name("user"),
 		kratos.Version("v1.0.0"),
 		kratos.Server(gs),
+		kratos.AfterStart(func(ctx context.Context) error {
+			fmt.Println("user service started")
+			return nil
+		}),
 	)
 	err := app.Run()
 

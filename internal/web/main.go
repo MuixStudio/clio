@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	kzap "github.com/go-kratos/kratos/contrib/log/zap/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	"github.com/muixstudio/clio/internal/aggregater/handler"
-	"github.com/muixstudio/clio/internal/aggregater/middleware/logger"
-	ginMiddleware "github.com/muixstudio/clio/internal/aggregater/middleware/metrics"
-	mm "github.com/muixstudio/clio/internal/aggregater/svc/observability"
+	"github.com/muixstudio/clio/internal/web/handler"
+	"github.com/muixstudio/clio/internal/web/middleware/logger"
+	ginMiddleware "github.com/muixstudio/clio/internal/web/middleware/metrics"
+	mm "github.com/muixstudio/clio/internal/web/svc/observability"
 	"go.uber.org/zap"
 )
 
@@ -53,10 +55,15 @@ func main() {
 		kratos.Server(
 			httpSrv,
 		),
+		kratos.BeforeStart(beforeStart),
 	)
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func beforeStart(ctx context.Context) error {
+	return nil
 }
 
 func initGinRouter() *gin.Engine {

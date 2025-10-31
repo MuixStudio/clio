@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/aggregater/svc"
+	"github.com/muixstudio/clio/internal/web/svc"
 )
 
 type UserHandler struct {

@@ -1,4 +1,4 @@
 syntax = "proto3";
 
-package usergroup;
-option go_package="pb/usergroup";
+package userService;
+option go_package="pb/userService";

@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/muixstudio/clio/internal/aggregater/svc"
-	"github.com/muixstudio/clio/internal/aggregater/utils/jwt"
-	"github.com/muixstudio/clio/internal/aggregater/utils/parse"
-	"github.com/muixstudio/clio/internal/aggregater/utils/response"
 	"github.com/muixstudio/clio/internal/common/pb/userService"
+	"github.com/muixstudio/clio/internal/web/svc"
+	"github.com/muixstudio/clio/internal/web/utils/jwt"
+	"github.com/muixstudio/clio/internal/web/utils/parse"
+	"github.com/muixstudio/clio/internal/web/utils/response"
 )
 
 type AuthHandler struct {
@@ -40,7 +39,6 @@ func (ah AuthHandler) Login() gin.HandlerFunc {
 			response.FailH(c, err)
 			return
 		}
-		log.Info("login success")
 		response.SuccessWithData(c, resp)
 	}
 }

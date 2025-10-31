@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/aggregater/middleware/metrics/semconv"
+	"github.com/muixstudio/clio/internal/web/middleware/metrics/semconv"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
