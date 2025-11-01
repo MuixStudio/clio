@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 
-	"github.com/gin-gonic/gin"
 	kzap "github.com/go-kratos/kratos/contrib/log/zap/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	"github.com/muixstudio/clio/internal/web/handler"
-	"github.com/muixstudio/clio/internal/web/middleware/logger"
-	ginMiddleware "github.com/muixstudio/clio/internal/web/middleware/metrics"
+	"github.com/muixstudio/clio/internal/web/config"
+	"github.com/muixstudio/clio/internal/web/router"
+	"github.com/muixstudio/clio/internal/web/svc"
 	mm "github.com/muixstudio/clio/internal/web/svc/observability"
 	"go.uber.org/zap"
 )
@@ -30,11 +29,19 @@ func (x *testWriteSyncer) Sync() error {
 
 func main() {
 	mm.InitMeterProvider()
+
+	//  init gin engine
+	svcCtx, err := svc.NewServiceContext(context.Background(), config.Config{})
+	if err != nil {
+		panic(err)
+	}
+	r := router.NewEngine(context.Background(), svcCtx)
+
+	// create http server
 	httpSrv := http.NewServer(
 		http.Address(":5020"),
 	)
-
-	r := initGinRouter()
+	// register router
 	httpSrv.HandlePrefix("/", r)
 
 	//core := zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{
@@ -64,18 +71,4 @@ func main() {
 
 func beforeStart(ctx context.Context) error {
 	return nil
-}
-
-func initGinRouter() *gin.Engine {
-	r := gin.New()
-	r.Use(
-		logger.Logger(),
-		ginMiddleware.Metrics("clio"),
-	)
-
-	gin.DisableBindValidation()
-	gin.SetMode(gin.ReleaseMode)
-
-	handler.Register(&r.RouterGroup)
-	return r
 }

@@ -1,6 +1,7 @@
-package handler
+package router
 
 import (
+	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,12 +10,25 @@ import (
 	"github.com/muixstudio/clio/internal/web/handler/user"
 	"github.com/muixstudio/clio/internal/web/middleware"
 	"github.com/muixstudio/clio/internal/web/middleware/cors"
+	"github.com/muixstudio/clio/internal/web/middleware/logger"
+	ginMiddleware "github.com/muixstudio/clio/internal/web/middleware/metrics"
 	"github.com/muixstudio/clio/internal/web/svc"
 )
 
-func Register(r *gin.RouterGroup) {
+func initEngine() *gin.Engine {
+	r := gin.New()
+	r.Use(
+		logger.Logger(),
+		ginMiddleware.Metrics("clio"),
+	)
 
-	svcCtx := svc.NewServiceContext()
+	gin.DisableBindValidation()
+	gin.SetMode(gin.ReleaseMode)
+	return r
+}
+
+func NewEngine(ctx context.Context, svcCtx *svc.ServiceContext) *gin.Engine {
+	r := initEngine()
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://localhost:3000"},
@@ -38,5 +52,5 @@ func Register(r *gin.RouterGroup) {
 	// api
 	api := r.Group("/api")
 	user.Register(api, svcCtx)
-
+	return r
 }
