@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 
 	kzap "github.com/go-kratos/kratos/contrib/log/zap/v2"
 	"github.com/go-kratos/kratos/v2"
@@ -9,6 +10,11 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/muixstudio/clio/internal/web/config"
 	"github.com/muixstudio/clio/internal/web/router"
+
+	kratosConfig "github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/go-kratos/kratos/v2/config/file"
+
 	"github.com/muixstudio/clio/internal/web/svc"
 	mm "github.com/muixstudio/clio/internal/web/svc/observability"
 	"go.uber.org/zap"
@@ -25,6 +31,31 @@ func (x *testWriteSyncer) Write(p []byte) (n int, err error) {
 
 func (x *testWriteSyncer) Sync() error {
 	return nil
+}
+
+func init() {
+	flag.StringVar(&flagconf, "conf", "config.yaml", "config path, eg: -conf config.yaml")
+}
+
+func parseConfig() config.Config {
+	flag.Parse()
+	c := kratosConfig.New(
+		kratosConfig.WithSource(
+			// 添加配置文件
+			file.NewSource(path),
+			// 添加前缀为 KRATOS_ 的环境变量，不需要的话也可以设为空字符串
+			env.NewSource("KRATOS_"),
+		))
+
+	// 加载配置源：
+	if err := c.Load(); err != nil {
+		log.Fatal(err)
+	}
+
+	// 获取环境变量 KRATOS_PORT 的值，这里用去掉前缀的名称进行读取
+	port, err := c.Value("PORT").String()
+
+	return config.Config{}
 }
 
 func main() {
