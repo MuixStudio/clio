@@ -1,5 +1,4 @@
 FROM golang:1.25.3-alpine AS base
-LABEL author="Kenley Wang"
 
 # Install build dependencies
 RUN apk add --no-cache git
@@ -14,8 +13,8 @@ ARG SERVICE_VERSION=0.0.0
 ARG SERVICE_DESC="No description"
 ARG BUILD_TIME=unknown
 ARG GIT_COMMIT=unknown
-ARG GIT_BRANCH=unknown
 ARG GO_VERSION=unknown
+ARG METADATA_PKG="github.com/muixstudio/clio/services/common/metadata"
 
 WORKDIR /clio
 
@@ -27,18 +26,19 @@ RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -a -installsuffix cgo \
     -ldflags "\
-        -X 'github.com/muixstudio/clio/services/common/metadata.Name=${SERVICE_NAME}' \
-        -X 'github.com/muixstudio/clio/services/common/metadata.Version=${SERVICE_VERSION}' \
-        -X 'github.com/muixstudio/clio/services/common/metadata.Description=${SERVICE_DESC}' \
-        -X 'github.com/muixstudio/clio/services/common/metadata.BuildTime=${BUILD_TIME}' \
-        -X 'github.com/muixstudio/clio/services/common/metadata.GitCommit=${GIT_COMMIT}' \
-        -X 'github.com/muixstudio/clio/services/common/metadata.GitBranch=${GIT_BRANCH}' \
-        -X 'github.com/muixstudio/clio/services/common/metadata.GoVersion=${GO_VERSION}'" \
-    -o app services/web/cmd/cmd.go
+        -X '${METADATA_PKG}.Name=${SERVICE_NAME}' \
+        -X '${METADATA_PKG}.Version=${SERVICE_VERSION}' \
+        -X '${METADATA_PKG}.Description=${SERVICE_DESC}' \
+        -X '${METADATA_PKG}.BuildTime=${BUILD_TIME}' \
+        -X '${METADATA_PKG}.GitCommit=${GIT_COMMIT}' \
+        -X '${METADATA_PKG}.GoVersion=${GO_VERSION}'" \
+    -o app services/web/cmd/main.go
 
 
 # Production stage
 FROM alpine:latest AS prod
+LABEL author="Kenley Wang"
+LABEL maintainer="Kenley Wang"
 
 # 添加必要的运行时依赖
 RUN apk --no-cache add ca-certificates tzdata
@@ -50,6 +50,6 @@ COPY --from=builder /clio/app .
 COPY --from=builder /clio/services/web/etc/config.yaml /etc/config.yaml
 COPY --from=builder /clio/services/web/docker/entrypoint.sh /entrypoint.sh
 
-EXPOSE 3917
+EXPOSE 5217
 
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
