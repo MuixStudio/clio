@@ -6,6 +6,9 @@
 .vscode
 .idea
 
+# AI settings
+.claude
+
 # Byproduct of the test environment
 docker/.env
 docker/postgres/data/*

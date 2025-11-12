@@ -30,5 +30,8 @@ go.work.sum
 .idea
 
 # Ignore all configuration files except the default file
-!etc/config.yaml
 etc/*
+!etc/config.yaml
+
+# binary file
+bin/*
