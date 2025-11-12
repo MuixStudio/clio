@@ -45,7 +45,6 @@ type App struct {
 }
 
 var Cmd = &cobra.Command{
-
 	Use:   "run",
 	Short: "Start the web server",
 	Long:  `Start the web server with the specified configuration file.`,
@@ -160,7 +159,10 @@ func (app *App) createKratosApp() (*kratos.App, error) {
 			"env":         app.cfg.Env,
 			"build_time":  meta.BuildTime,
 			"git_commit":  meta.GitCommit,
-			"git_branch":  meta.GitBranch,
+		}),
+		kratos.AfterStart(func(ctx context.Context) error {
+			showServiceInfo(meta, app.cfg)
+			return nil
 		}),
 		kratos.Logger(app.logger),
 		kratos.Server(httpSrv),
@@ -191,13 +193,86 @@ func (app *App) createHTTPServer() (*http.Server, error) {
 	return httpSrv, nil
 }
 
-func tip() {
-	fmt.Println(`
-       .__  .__        
-  ____ |  | |__| ____  
-_/ ___\|  | |  |/  _ \ 
-\  \___|  |_|  (  <_> )
- \___  >____/__|\____/ 
-     \/                
-	`)
+func showServiceInfo(meta *metadata.ServiceMetadata, cfg *config.Config) {
+	// ASCII art lines for Clio
+	asciiArt := []string{
+		"       .__  .__        ",
+		"  ____ |  | |__| ____  ",
+		"_/ ___\\|  | |  |/  _ \\ ",
+		"\\  \\___|  |_|  (  <_> )",
+		" \\___  >____/__|\\____/ ",
+		"     \\/                ",
+	}
+
+	// Information lines (right side)
+	infoLines := []string{
+		fmt.Sprintf("[%s] service %s run in %s", meta.Name, meta.Version, cfg.Env),
+		"",
+		fmt.Sprintf("Port: %d", cfg.Port),
+		fmt.Sprintf("Address: http://%s:%d", cfg.Host, cfg.Port),
+		"",
+		fmt.Sprintf("Build: %s", meta.BuildTime),
+		fmt.Sprintf("Commit: %.8s", meta.GitCommit),
+		fmt.Sprintf("Go: %s", meta.GoVersion),
+	}
+
+	// Width configuration
+	const (
+		asciiWidth = 24                               // ASCII art width
+		spacing    = 4                                // Space between ASCII and info
+		infoWidth  = 46                               // Info text width
+		totalWidth = asciiWidth + spacing + infoWidth // 66
+		boxWidth   = totalWidth + 2                   // +2 for left and right padding (│ ... │)
+	)
+
+	border := "─"
+	topBorder := "┌" + repeatString(border, boxWidth) + "┐"
+	bottomBorder := "└" + repeatString(border, boxWidth) + "┘"
+
+	fmt.Println()
+	fmt.Println(topBorder)
+
+	// Print ASCII art and info side by side
+	maxLines := len(asciiArt)
+	if len(infoLines) > maxLines {
+		maxLines = len(infoLines)
+	}
+
+	for i := 0; i < maxLines; i++ {
+		var line string
+
+		// Add ASCII art (left side)
+		if i < len(asciiArt) {
+			line += fmt.Sprintf("%-*s", asciiWidth, asciiArt[i])
+		} else {
+			line += repeatString(" ", asciiWidth)
+		}
+
+		// Add spacing
+		line += repeatString(" ", spacing)
+
+		// Add info (right side)
+		if i < len(infoLines) {
+			line += fmt.Sprintf("%-*s", infoWidth, infoLines[i])
+		} else {
+			line += repeatString(" ", infoWidth)
+		}
+
+		fmt.Printf("│ %s │\n", line)
+	}
+
+	// Print footer message
+	fmt.Println("│" + repeatString(" ", boxWidth) + "│")
+	fmt.Printf("│ %-*s │\n", totalWidth, "Server is ready to accept connections!")
+	fmt.Println(bottomBorder)
+	fmt.Println()
+}
+
+// repeatString repeats a string n times
+func repeatString(s string, n int) string {
+	var result string
+	for i := 0; i < n; i++ {
+		result += s
+	}
+	return result
 }
