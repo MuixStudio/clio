@@ -11,21 +11,18 @@ type ServiceMetadata struct {
 	Description string
 	BuildTime   string
 	GitCommit   string
-	GitBranch   string
 	GoVersion   string
 }
 
-// 这些变量会在编译时通过 -ldflags 注入
 var (
 	// 必需字段
-	Name        = "unknown-service" // 服务名称
-	Version     = "0.0.0"           // 版本号
-	Description = "No description"  // 服务描述
+	Name        = "unknown"        // 服务名称
+	Version     = "0.0.0"          // 版本号
+	Description = "No description" // 服务描述
 
 	// 构建信息（可选）
 	BuildTime = "unknown"         // 构建时间
 	GitCommit = "unknown"         // Git commit hash
-	GitBranch = "unknown"         // Git 分支
 	GoVersion = runtime.Version() // Go 版本
 )
 
@@ -37,7 +34,6 @@ func Get() *ServiceMetadata {
 		Description: Description,
 		BuildTime:   BuildTime,
 		GitCommit:   GitCommit,
-		GitBranch:   GitBranch,
 		GoVersion:   GoVersion,
 	}
 }
@@ -67,11 +63,6 @@ func GetGitCommit() string {
 	return GitCommit
 }
 
-// GetGitBranch 获取 Git 分支
-func GetGitBranch() string {
-	return GitBranch
-}
-
 // GetGoVersion 获取 Go 版本
 func GetGoVersion() string {
 	return GoVersion
@@ -93,9 +84,6 @@ func (m *ServiceMetadata) FullString() string {
 	}
 	if m.GitCommit != "unknown" {
 		s += "\nCommit: " + m.GitCommit
-	}
-	if m.GitBranch != "unknown" {
-		s += "\nBranch: " + m.GitBranch
 	}
 	if m.GoVersion != "unknown" {
 		s += "\nGo: " + m.GoVersion
