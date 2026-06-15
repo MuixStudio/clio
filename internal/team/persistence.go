@@ -1,0 +1,70 @@
+/*
+ * Copyright 2026 MuixStudio
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package team
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
+
+type TeamUpdate struct {
+	Name        *string
+	Description *string
+}
+
+type TeamRoleUpdate struct {
+	Name        *string
+	Description *string
+}
+
+type (
+	TeamPersister interface {
+		CreateTeam(ctx context.Context, t *Team) error
+		GetTeam(ctx context.Context, id uuid.UUID) (*Team, error)
+		GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]Team, error)
+		ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*Team, error)
+		UpdateTeam(ctx context.Context, id uuid.UUID, update TeamUpdate) error
+		DeleteTeam(ctx context.Context, id uuid.UUID) error
+		ListTeams(ctx context.Context) ([]*Team, error)
+	}
+	TeamPersisterProvider interface {
+		TeamPersister() TeamPersister
+	}
+
+	TeamMemberPersister interface {
+		AddMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
+		GetMember(ctx context.Context, id uuid.UUID) (*TeamMember, error)
+		RemoveMember(ctx context.Context, id uuid.UUID) error
+		ListMembers(ctx context.Context, teamID uuid.UUID) ([]*TeamMember, error)
+		//UpdateMemberRole(ctx context.Context, memberID uuid.UUID, roleID uuid.UUID) error
+	}
+	TeamMemberPersisterProvider interface {
+		TeamMemberPersister() TeamMemberPersister
+	}
+
+	//TeamRolePersister interface {
+	//	CreateRole(ctx context.Context, r *TeamRole) error
+	//	GetRole(ctx context.Context, id uuid.UUID) (*TeamRole, error)
+	//	UpdateRole(ctx context.Context, id uuid.UUID, update TeamRoleUpdate) error
+	//	DeleteRole(ctx context.Context, id uuid.UUID) error
+	//	ListRoles(ctx context.Context, teamID uuid.UUID) ([]*TeamRole, error)
+	//}
+	//TeamRolePersisterProvider interface {
+	//	TeamRolePersister() TeamRolePersister
+	//}
+)

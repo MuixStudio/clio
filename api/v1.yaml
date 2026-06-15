@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: Zus API
+  version: v1
+  description: |
+    OpenAPI documentation for the current Zus v1 HTTP handlers.
+servers:
+  - url: /api/v1
+tags:
+  - name: Connectors
+    description: Connector management APIs
+paths:
+  /connectors:
+    get:
+      tags:
+        - Connectors
+      summary: List connectors
+      description: Lists connectors for the current organization context.
+      operationId: listConnectors
+      parameters:
+        - name: page
+          in: query
+          description: Page number. Defaults to 1.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of connectors per page. Defaults to 20.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by connector enabled status. Omit to return both enabled and disabled connectors.
+          required: false
+          schema:
+            $ref: '#/components/schemas/ConnectorStatus'
+      responses:
+        '200':
+          description: Connectors listed successfully.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required:
+                      - data
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ListConnectorsData'
+              examples:
+                ok:
+                  value:
+                    message: ok
+                    data:
+                      count: 1
+                      connectors:
+                        - id: 018f3fbd-9f5f-7a6b-8c9d-123456789abc
+                          type: prometheus
+                          name: production-alertmanager
+                          labels:
+                            env: production
+                          enabled: true
+                          created_at: '2026-06-07T14:49:00Z'
+                          updated_at: '2026-06-07T14:49:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /connector:
+    post:
+      tags:
+        - Connectors
+      summary: Create a connector
+      description: Creates a connector of a registered provider type.
+      operationId: createConnector
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConnectorRequest'
+            examples:
+              prometheus:
+                value:
+                  name: production-alertmanager
+                  type: prometheus
+                  team_id: 018f3fbd-9f5f-7a6b-8c9d-123456789abc
+                  labels:
+                    env: production
+      responses:
+        '200':
+          description: Connector created successfully.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required:
+                      - data
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Connector'
+              examples:
+                ok:
+                  value:
+                    message: ok
+                    data:
+                      id: 018f3fbd-9f5f-7a6b-8c9d-123456789abc
+                      type: prometheus
+                      name: production-alertmanager
+                      token: 9b7f2d5c-8a9e-4b72-80db-f9c10bf2bccc
+                      labels: null
+                      enabled: true
+                      created_at: '0001-01-01T00:00:00Z'
+                      updated_at: '0001-01-01T00:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /connector/count:
+    get:
+      tags:
+        - Connectors
+      summary: Count connectors by type
+      description: Counts connectors by provider type. When status is omitted, all connectors of that type are counted.
+      operationId: countConnectors
+      parameters:
+        - name: type
+          in: query
+          description: Connector provider type.
+          required: true
+          schema:
+            type: string
+          example: prometheus
+        - name: status
+          in: query
+          description: Optional enabled-status filter. Omit to count all connectors of the given type.
+          required: false
+          schema:
+            $ref: '#/components/schemas/ConnectorStatus'
+      responses:
+        '200':
+          description: Connectors counted successfully.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    required:
+                      - data
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CountConnectorsData'
+              examples:
+                ok:
+                  value:
+                    message: ok
+                    data:
+                      type: prometheus
+                      count: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /connector/{id}:
+    patch:
+      tags:
+        - Connectors
+      summary: Update a connector
+      description: Updates mutable connector fields.
+      operationId: updateConnector
+      parameters:
+        - name: id
+          in: path
+          description: Connector ID.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConnectorRequest'
+            examples:
+              renameAndDisable:
+                value:
+                  name: production-alertmanager
+                  enabled: false
+      responses:
+        '200':
+          description: Connector updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                ok:
+                  value:
+                    message: ok
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ConnectorStatus:
+      type: string
+      enum:
+        - enable
+        - disable
+      description: enable maps to enabled=true; disable maps to enabled=false.
+    CreateConnectorRequest:
+      type: object
+      required:
+        - name
+        - type
+        - team_id
+      properties:
+        name:
+          type: string
+          description: Connector display name.
+        type:
+          type: string
+          description: Registered connector provider type.
+        team_id:
+          type: string
+          format: uuid
+          description: Team that owns the connector.
+        labels:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Optional user-defined labels.
+    UpdateConnectorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Connector display name.
+        enabled:
+          type: boolean
+          description: Whether the connector is enabled.
+    Connector:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - labels
+        - enabled
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        name:
+          type: string
+        token:
+          type: string
+          description: Connector secret token. Present when returned by create responses.
+        labels:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ListConnectorsData:
+      type: object
+      required:
+        - count
+        - connectors
+      properties:
+        count:
+          type: integer
+          description: Number of connectors in this response page.
+          minimum: 0
+        connectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connector'
+    CountConnectorsData:
+      type: object
+      required:
+        - type
+        - count
+      properties:
+        type:
+          type: string
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+    SuccessResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: ok
+    ErrorResponse:
+      type: object
+      required:
+        - reason
+        - message
+        - metadata
+      properties:
+        reason:
+          type: string
+          description: Machine-readable error reason.
+        message:
+          type: string
+          description: Human-readable error message.
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missingType:
+              value:
+                reason: MISSING_TYPE
+                message: query parameter 'type' is required
+                metadata: null
+            invalidStatus:
+              value:
+                reason: INVALID_REQUEST
+                message: query parameter 'status' must be enable or disable
+                metadata: null
+            noProvider:
+              value:
+                reason: NO_PROVIDER
+                message: no provider for type prometheus
+                metadata: null
+    NotFound:
+      description: Connector not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            reason: CONNECTOR_NOT_FOUND
+            message: 'connector not found: 018f3fbd-9f5f-7a6b-8c9d-123456789abc'
+            metadata: null
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            reason: DB_ERROR
+            message: persistence error
+            metadata: null

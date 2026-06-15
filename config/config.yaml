@@ -1,0 +1,131 @@
+# =============================================================================
+# Zus Identity Service — 推荐配置
+# =============================================================================
+# 所有值均可通过环境变量覆盖，规则：点路径转大写，点替换为下划线
+#   示例：SERVE_PORT=9899  SESSION_JWT_SECRET=secret  ./zus
+#
+# 敏感字段（密码、密钥）建议通过环境变量注入，不要提交到版本控制。
+# =============================================================================
+
+# 运行环境：development | production
+env: production
+
+# =============================================================================
+# HTTP 服务
+# =============================================================================
+serve:
+  host: "0.0.0.0"  # 生产环境可改为 "127.0.0.1"（配合 Nginx/反向代理）
+  port: 9899
+
+# =============================================================================
+# 日志（zap）
+# =============================================================================
+log:
+  level: info       # debug | info | warn | error
+  format: console   # console | json（结构化，生产推荐）
+  # outputpath: ""  # 日志文件路径；空则只输出到 stdout
+  # maxsize: 100    # 单个日志文件上限 (MB)
+  # maxbackups: 3   # 保留的旧日志文件数
+  # maxage: 7       # 旧日志保留天数
+  # compress: false # 是否 gzip 压缩旧日志
+
+# =============================================================================
+# 数据库（PostgreSQL）
+# =============================================================================
+database:
+  host: "127.0.0.1"
+  port: 5432
+  user: "postgres"
+  password: ""       # 推荐通过环境变量注入：DATABASE_PASSWORD=xxx
+  db_name: "zus"
+  ssl_mode: disable  # disable | require | verify-ca | verify-full
+  time_zone: "Asia/Shanghai"
+
+  # 连接池
+  max_idle_conns: 10    # 最大空闲连接数
+  max_open_conns: 100   # 最大打开连接数
+  conn_max_lifetime: 1h # 连接最长复用时间
+  conn_max_idle_time: 10m
+
+  # GORM 调优
+  slow_threshold: 200ms  # 慢查询阈值，超过则打印 warn 日志
+  parameterized_queries: true  # 使用参数化查询，防止 SQL 注入
+  prepare_stmt: true           # 缓存预编译语句，提升重复查询性能
+  disable_foreign_key_constraint_when_migrating: false
+  singular_table: false  # true 则表名不加复数 s
+
+# =============================================================================
+# Session
+# =============================================================================
+session:
+  lifespan: 24h               # Session（Cookie）有效期
+  access_token_lifespan: 15m  # JWT Access Token 有效期，建议短于 session
+  jwt_secret: "change-me-in-production"  # 生产环境务必替换为 ≥32 字节随机串
+
+# =============================================================================
+# Self-Service 流程
+# =============================================================================
+selfservice:
+
+  # ---- 流程生命周期 ----------------------------------------------------------
+  flows:
+    registration:
+      lifespan: 15m  # 注册流程最长有效时间，超时后需重新发起
+      after:
+        default_browser_return_url: ""  # 注册成功后跳转地址（浏览器流专用）
+
+    login:
+      lifespan: 15m
+      after:
+        default_browser_return_url: ""  # 登录成功后跳转地址
+
+    logout:
+      lifespan: 5m  # 登出 token 有效期
+
+    recovery:
+      lifespan: 15m  # 密码找回流程有效期，建议不超过 30m
+      after:
+        default_browser_return_url: ""
+
+    verification:
+      lifespan: 15m  # 邮箱验证流程有效期
+      after:
+        default_browser_return_url: ""
+
+  # ---- 认证策略 --------------------------------------------------------------
+  methods:
+
+    # 密码策略（用户名+密码）
+    password:
+      enabled: true
+      config:
+        registration_enabled: true  # false 则只允许登录，禁止密码注册（适合邀请制场景）
+
+    # 无密码邮件验证码策略（登录 & 注册均可用）
+    code:
+      enabled: false  # 需要配置 courier.strategy: smtp 才能在生产使用
+
+    # OAuth2 / OIDC 第三方登录
+    oidc:
+      enabled: false
+      config:
+        providers: []
+        # - id: github               # 唯一 slug，作为 provider key
+        #   provider: github         # 内置实现名，目前支持 "github"
+        #   client_id: ""
+        #   client_secret: ""        # 推荐通过环境变量注入
+
+# =============================================================================
+# Courier（消息投递，用于验证码邮件）
+# =============================================================================
+courier:
+  # console：将邮件内容打印到 stdout，无需 SMTP（开发/测试用）
+  # smtp：通过 SMTP 真实投递（生产必须）
+  strategy: console
+
+  smtp:
+    host: "smtp.example.com"
+    port: 587
+    username: ""
+    password: ""  # 推荐通过环境变量注入：COURIER_SMTP_PASSWORD=xxx
+    from: "noreply@example.com"

@@ -1,0 +1,116 @@
+import { NextRequest, NextResponse } from "next/server"
+import { isAccessTokenExpired } from "@/utils/auth/verify"
+
+type TokenPair = { access_token: string; refresh_token: string }
+
+// Middleware has no browser cookie jar, so the refresh_token must be forwarded
+// via the Cookie header. New tokens are returned via Set-Cookie, not the body.
+async function refreshTokens(refreshToken: string): Promise<TokenPair | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_API_PATH}/refresh_token`,
+      {
+        method: "POST",
+        headers: { Cookie: `refresh_token=${refreshToken}` },
+      }
+    )
+    if (!res.ok) return null
+
+    const setCookies = res.headers.getSetCookie?.() ?? []
+    let access_token: string | undefined
+    let refresh_token: string | undefined
+
+    for (const cookie of setCookies) {
+      const [pair] = cookie.split(";")
+      const [name, value] = pair.split("=")
+      if (name.trim() === "access_token") access_token = value.trim()
+      if (name.trim() === "refresh_token") refresh_token = value.trim()
+    }
+
+    if (!access_token || !refresh_token) return null
+    return { access_token, refresh_token }
+  } catch {
+    return null
+  }
+}
+
+const COOKIE_OPTS = {
+  path: "/",
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+}
+
+function setTokenCookies(
+  response: NextResponse,
+  accessToken: string,
+  refreshToken: string
+) {
+  // access_token is readable by JS so the client session-provider can decode the session
+  response.cookies.set("access_token", accessToken, COOKIE_OPTS)
+  // refresh_token is httpOnly to prevent exfiltration via XSS
+  response.cookies.set("refresh_token", refreshToken, {
+    ...COOKIE_OPTS,
+    httpOnly: true,
+  })
+}
+
+function clearTokenCookies(response: NextResponse) {
+  response.cookies.delete("access_token")
+  response.cookies.delete("refresh_token")
+}
+
+const AUTH_PREFIXES = ["/signin", "/signup", "/recovery", "/register"]
+
+// Add any other public routes here (e.g. "/about", "/pricing").
+// Auth pages are handled separately above and are implicitly public.
+const PUBLIC_PREFIXES: string[] = ["/exchange-code", "/account-agreement"]
+
+function isAuthPage(pathname: string) {
+  return AUTH_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+function isPublic(pathname: string) {
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const accessToken = request.cookies.get("access_token")?.value
+  const refreshToken = request.cookies.get("refresh_token")?.value
+
+  if (isAuthPage(pathname)) {
+    if (accessToken && !isAccessTokenExpired(accessToken)) {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+    return NextResponse.next()
+  }
+
+  if (isPublic(pathname)) {
+    return NextResponse.next()
+  }
+
+  if (accessToken && !isAccessTokenExpired(accessToken)) {
+    return NextResponse.next()
+  }
+
+  // access_token is expired — attempt a silent refresh using the refresh_token.
+  if (refreshToken) {
+    const newTokens = await refreshTokens(refreshToken)
+    if (newTokens?.access_token && newTokens?.refresh_token) {
+      const response = NextResponse.next()
+      setTokenCookies(response, newTokens.access_token, newTokens.refresh_token)
+      return response
+    }
+  }
+
+  // Both tokens invalid — clear cookies and redirect to login
+  const loginUrl = new URL("/signin", request.url)
+  loginUrl.searchParams.set("callbackUrl", pathname)
+  const response = NextResponse.redirect(loginUrl)
+  clearTokenCookies(response)
+  return response
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|.well-known/).*)"],
+}

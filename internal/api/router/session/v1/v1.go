@@ -1,0 +1,53 @@
+/*
+ * Copyright 2026 MuixStudio
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package v1
+
+import (
+	"github.com/gin-gonic/gin"
+	sessionHandler "github.com/muixstudio/clio/internal/api/handler/session"
+	"github.com/muixstudio/clio/internal/driver/config"
+	"github.com/muixstudio/clio/internal/logger"
+	"github.com/muixstudio/clio/internal/session"
+)
+
+type dependencies interface {
+	session.SessionPersisterProvider
+	session.SessionTokenExchangeCodePersisterProvider
+
+	logger.Logger
+	config.Provider
+}
+
+func Register(router *gin.RouterGroup, deps dependencies) {
+	v1 := router.Group("/v1")
+	handler := initHandler(deps)
+
+	{
+		v1.GET("/session/whoami", handler.WhoAmI())
+		v1.GET("/sessions", handler.ListSessions())
+
+		v1.POST("/token-exchange", handler.TokenExchange())
+		v1.POST("/refresh_token", handler.Refresh())
+
+		v1.DELETE("/session", handler.RevokeOtherSessions())
+		v1.DELETE("/session/:id", handler.RevokeSessionByID())
+	}
+}
+
+func initHandler(deps dependencies) *sessionHandler.Handler {
+	return sessionHandler.NewHandler(deps)
+}
