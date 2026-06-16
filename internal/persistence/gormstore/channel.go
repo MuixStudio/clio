@@ -20,13 +20,14 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/muixstudio/clio/internal/channel"
+	"github.com/muixstudio/clio/internal/domain/channel/entity"
+	channel2 "github.com/muixstudio/clio/internal/domain/channel/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"github.com/muixstudio/clio/internal/persistence/gormstore/model"
 	"gorm.io/gorm"
 )
 
-func toChannelModel(c *channel.Channel) *model.Channel {
+func toChannelModel(c *entity.Channel) *model.Channel {
 	return &model.Channel{
 		ID:          c.ID,
 		TeamID:      c.TeamID,
@@ -39,13 +40,13 @@ func toChannelModel(c *channel.Channel) *model.Channel {
 	}
 }
 
-func fromChannelModel(m *model.Channel) *channel.Channel {
-	return &channel.Channel{
+func fromChannelModel(m *model.Channel) *entity.Channel {
+	return &entity.Channel{
 		ID:          m.ID,
 		Description: m.Description,
 		TeamID:      m.TeamID,
 		Name:        m.Name,
-		Visibility:  channel.VisibilityType(m.Visibility),
+		Visibility:  entity.VisibilityType(m.Visibility),
 		Enabled:     m.Enabled,
 		IsDefault:   m.IsDefault,
 		CreatedBy:   m.CreatedBy,
@@ -54,7 +55,7 @@ func fromChannelModel(m *model.Channel) *channel.Channel {
 	}
 }
 
-func toChannelMemberModel(teamID uuid.UUID, channelID uuid.UUID, userID uuid.UUID, role channel.MemberRole) *model.ChannelMember {
+func toChannelMemberModel(teamID uuid.UUID, channelID uuid.UUID, userID uuid.UUID, role entity.MemberRole) *model.ChannelMember {
 	return &model.ChannelMember{
 		ID:        uuid.New(),
 		TeamID:    teamID,
@@ -64,19 +65,19 @@ func toChannelMemberModel(teamID uuid.UUID, channelID uuid.UUID, userID uuid.UUI
 	}
 }
 
-func fromChannelMemberModel(m *model.ChannelMember) *channel.ChannelMember {
-	return &channel.ChannelMember{
+func fromChannelMemberModel(m *model.ChannelMember) *entity.ChannelMember {
+	return &entity.ChannelMember{
 		ID:        m.ID,
 		TeamID:    m.TeamID,
 		ChannelID: m.ChannelID,
 		UserID:    m.UserID,
-		Role:      channel.MemberRole(m.Role),
+		Role:      entity.MemberRole(m.Role),
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 	}
 }
 
-func (gs *GormStore) AddChannel(ctx context.Context, c *channel.Channel) error {
+func (gs *GormStore) AddChannel(ctx context.Context, c *entity.Channel) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -94,7 +95,7 @@ func (gs *GormStore) AddChannel(ctx context.Context, c *channel.Channel) error {
 	return nil
 }
 
-func (gs *GormStore) GetChannelByID(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID) (*channel.Channel, error) {
+func (gs *GormStore) GetChannelByID(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID) (*entity.Channel, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -115,7 +116,7 @@ func (gs *GormStore) GetChannelByID(ctx context.Context, teamID uuid.UUID, chann
 	return fromChannelModel(&m), nil
 }
 
-func (gs *GormStore) ListChannels(ctx context.Context, teamID uuid.UUID, userID uuid.UUID, opts *channel.ListOptions) ([]*channel.Channel, int, error) {
+func (gs *GormStore) ListChannels(ctx context.Context, teamID uuid.UUID, userID uuid.UUID, opts *channel2.ListOptions) ([]*entity.Channel, int, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -124,7 +125,7 @@ func (gs *GormStore) ListChannels(ctx context.Context, teamID uuid.UUID, userID 
 	query := gs.channelListQuery(ctx, orgID, opts).
 		Where("team_id = ?", teamID).
 		Where("visibility = ? OR EXISTS (?)",
-			string(channel.Public),
+			string(entity.Public),
 			gs.db.WithContext(ctx).Model(&model.ChannelMember{}).
 				Select("1").
 				Where("channel_members.channel_id = channels.id").
@@ -137,7 +138,7 @@ func (gs *GormStore) ListChannels(ctx context.Context, teamID uuid.UUID, userID 
 	return gs.listChannels(query, opts)
 }
 
-func (gs *GormStore) UpdateChannel(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID, update *channel.Update) error {
+func (gs *GormStore) UpdateChannel(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID, update *channel2.Update) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -201,13 +202,13 @@ func (gs *GormStore) DeleteChannelByID(ctx context.Context, teamID uuid.UUID, ch
 	return nil
 }
 
-func (gs *GormStore) AddChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID, role channel.MemberRole) error {
+func (gs *GormStore) AddChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID, role entity.MemberRole) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
 	}
 	if role == "" {
-		role = channel.Member
+		role = entity.Member
 	}
 
 	m := toChannelMemberModel(teamID, channelID, userID, role)
@@ -219,7 +220,7 @@ func (gs *GormStore) AddChannelMember(ctx context.Context, teamID, channelID, us
 	return nil
 }
 
-func (gs *GormStore) GetChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID) (*channel.ChannelMember, error) {
+func (gs *GormStore) GetChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID) (*entity.ChannelMember, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -241,7 +242,7 @@ func (gs *GormStore) GetChannelMember(ctx context.Context, teamID, channelID, us
 	return fromChannelMemberModel(&m), nil
 }
 
-func (gs *GormStore) ListChannelMembers(ctx context.Context, teamID, channelID uuid.UUID) ([]*channel.ChannelMember, int, error) {
+func (gs *GormStore) ListChannelMembers(ctx context.Context, teamID, channelID uuid.UUID) ([]*entity.ChannelMember, int, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -262,14 +263,14 @@ func (gs *GormStore) ListChannelMembers(ctx context.Context, teamID, channelID u
 	if err := query.Find(&models).Error; err != nil {
 		return nil, 0, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
 	}
-	members := make([]*channel.ChannelMember, 0, len(models))
+	members := make([]*entity.ChannelMember, 0, len(models))
 	for i := range models {
 		members = append(members, fromChannelMemberModel(&models[i]))
 	}
 	return members, int(count), nil
 }
 
-func (gs *GormStore) UpdateChannelMemberRole(ctx context.Context, teamID, channelID, userID uuid.UUID, role channel.MemberRole) error {
+func (gs *GormStore) UpdateChannelMemberRole(ctx context.Context, teamID, channelID, userID uuid.UUID, role entity.MemberRole) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -313,7 +314,7 @@ func (gs *GormStore) RemoveChannelMember(ctx context.Context, teamID, channelID,
 	return nil
 }
 
-func (gs *GormStore) channelListQuery(ctx context.Context, orgID uuid.NullUUID, opts *channel.ListOptions) *gorm.DB {
+func (gs *GormStore) channelListQuery(ctx context.Context, orgID uuid.NullUUID, opts *channel2.ListOptions) *gorm.DB {
 	query := gs.db.WithContext(ctx).Model(&model.Channel{}).Where(map[string]any{
 		"organization_id": orgID,
 	})
@@ -332,7 +333,7 @@ func (gs *GormStore) channelListQuery(ctx context.Context, orgID uuid.NullUUID, 
 	return query
 }
 
-func (gs *GormStore) listChannels(query *gorm.DB, opts *channel.ListOptions) ([]*channel.Channel, int, error) {
+func (gs *GormStore) listChannels(query *gorm.DB, opts *channel2.ListOptions) ([]*entity.Channel, int, error) {
 	var count int64
 	if err := query.Count(&count).Error; err != nil {
 		return nil, 0, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
@@ -354,7 +355,7 @@ func (gs *GormStore) listChannels(query *gorm.DB, opts *channel.ListOptions) ([]
 	if err := query.Order("created_at DESC").Find(&models).Error; err != nil {
 		return nil, 0, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
 	}
-	channels := make([]*channel.Channel, 0, len(models))
+	channels := make([]*entity.Channel, 0, len(models))
 	for i := range models {
 		channels = append(channels, fromChannelModel(&models[i]))
 	}

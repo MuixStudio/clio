@@ -18,7 +18,6 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/alert"
 	v1Alert "github.com/muixstudio/clio/internal/api/router/alert/v1"
 	v1Channel "github.com/muixstudio/clio/internal/api/router/channel/v1"
 	v1Connector "github.com/muixstudio/clio/internal/api/router/connector/v1"
@@ -26,8 +25,12 @@ import (
 	v1Session "github.com/muixstudio/clio/internal/api/router/session/v1"
 	v1Team "github.com/muixstudio/clio/internal/api/router/team/v1"
 	v1Webhook "github.com/muixstudio/clio/internal/api/router/webhook/v1"
-	"github.com/muixstudio/clio/internal/channel"
-	"github.com/muixstudio/clio/internal/connector"
+	alertDomain "github.com/muixstudio/clio/internal/domain/alert"
+	alertRepo "github.com/muixstudio/clio/internal/domain/alert/repository"
+	"github.com/muixstudio/clio/internal/domain/channel/repository"
+	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
+	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
+	teamRepo "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/driver/config"
 	loginFlow "github.com/muixstudio/clio/internal/flow/login"
 	logoutLfow "github.com/muixstudio/clio/internal/flow/logout"
@@ -36,17 +39,17 @@ import (
 	verificationFlow "github.com/muixstudio/clio/internal/flow/verification"
 	"github.com/muixstudio/clio/internal/logger"
 	"github.com/muixstudio/clio/internal/session"
-	"github.com/muixstudio/clio/internal/team"
 )
 
 type connectorDependencies interface {
-	connector.ConnectorPersisterProvider
-	alert.AlertPersisterProvider
-	connector.ConnectorProviderProvider
-	channel.ChannelPersisterProvider
-	channel.ChannelMemberPersisterProvider
-	team.TeamPersisterProvider
-	team.TeamMemberPersisterProvider
+	connectorRepo.ConnectorPersisterProvider
+	alertRepo.AlertPersisterProvider
+	alertDomain.AlertPublisherProvider
+	connectorDomain.ConnectorProviderProvider
+	repository.ChannelPersisterProvider
+	repository.ChannelMemberPersisterProvider
+	teamRepo.TeamPersisterProvider
+	teamRepo.TeamMemberPersisterProvider
 
 	session.SessionPersisterProvider
 	session.SessionTokenExchangeCodePersisterProvider

@@ -18,13 +18,13 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/alert"
 	alertHandler "github.com/muixstudio/clio/internal/api/handler/alert"
+	"github.com/muixstudio/clio/internal/domain/alert/repository"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
-	alert.AlertPersisterProvider
+	repository.AlertPersisterProvider
 
 	logger.Logger
 }

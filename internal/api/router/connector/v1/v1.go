@@ -18,17 +18,18 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muixstudio/clio/internal/alert"
 	connectorHannder "github.com/muixstudio/clio/internal/api/handler/connector"
-	"github.com/muixstudio/clio/internal/connector"
+	"github.com/muixstudio/clio/internal/domain/alert/repository"
+	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
+	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
 	"github.com/muixstudio/clio/internal/driver/config"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
-	connector.ConnectorPersisterProvider
-	alert.AlertPersisterProvider
-	connector.ConnectorProviderProvider
+	connectorRepo.ConnectorPersisterProvider
+	repository.AlertPersisterProvider
+	connectorDomain.ConnectorProviderProvider
 
 	logger.Logger
 

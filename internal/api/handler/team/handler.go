@@ -17,19 +17,20 @@
 package team
 
 import (
-	"github.com/muixstudio/clio/internal/alert"
-	"github.com/muixstudio/clio/internal/connector"
+	"github.com/muixstudio/clio/internal/domain/alert/repository"
+	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
+	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
+	teamRepo "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/driver/config"
 	"github.com/muixstudio/clio/internal/logger"
-	"github.com/muixstudio/clio/internal/team"
 )
 
 type dependencies interface {
-	connector.ConnectorPersisterProvider
-	alert.AlertPersisterProvider
-	connector.ConnectorProviderProvider
-	team.TeamPersisterProvider
-	team.TeamMemberPersisterProvider
+	connectorRepo.ConnectorPersisterProvider
+	repository.AlertPersisterProvider
+	connectorDomain.ConnectorProviderProvider
+	teamRepo.TeamPersisterProvider
+	teamRepo.TeamMemberPersisterProvider
 
 	logger.Logger
 	config.Provider

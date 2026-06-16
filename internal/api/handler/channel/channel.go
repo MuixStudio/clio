@@ -22,7 +22,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
-	channelDomain "github.com/muixstudio/clio/internal/channel"
+	channelEntity "github.com/muixstudio/clio/internal/domain/channel/entity"
+	channelRepo "github.com/muixstudio/clio/internal/domain/channel/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
@@ -81,7 +82,7 @@ func parseUUIDParam(c *gin.Context, param string, label string) (uuid.UUID, bool
 	return id, true
 }
 
-func toChannelItem(ch *channelDomain.Channel) channelItem {
+func toChannelItem(ch *channelEntity.Channel) channelItem {
 	return channelItem{
 		ID:          ch.ID,
 		Description: ch.Description,
@@ -113,7 +114,7 @@ func (h *ChannelHandler) List() gin.HandlerFunc {
 			return
 		}
 
-		options := channelDomain.ListOptions{
+		options := channelRepo.ListOptions{
 			Page:     1,
 			PageSize: 20,
 			TeamID:   &teamID,
@@ -188,20 +189,20 @@ func (h *ChannelHandler) Create() gin.HandlerFunc {
 			return
 		}
 
-		var opts []channelDomain.Option
+		var opts []channelEntity.Option
 		if req.Description != nil {
-			opts = append(opts, channelDomain.WithDescription(*req.Description))
+			opts = append(opts, channelEntity.WithDescription(*req.Description))
 		}
 
-		var ch *channelDomain.Channel
+		var ch *channelEntity.Channel
 		if req.IsDefault != nil && *req.IsDefault {
-			ch = channelDomain.NewDefaultChannel(teamID, req.CreatedBy, opts...)
+			ch = channelEntity.NewDefaultChannel(teamID, req.CreatedBy, opts...)
 		} else {
-			switch channelDomain.VisibilityType(req.Visibility) {
-			case channelDomain.Public:
-				ch = channelDomain.NewPublicChannel(teamID, req.CreatedBy, req.Name, opts...)
-			case channelDomain.Private:
-				ch = channelDomain.NewPrivateChannel(teamID, req.CreatedBy, req.Name, opts...)
+			switch channelEntity.VisibilityType(req.Visibility) {
+			case channelEntity.Public:
+				ch = channelEntity.NewPublicChannel(teamID, req.CreatedBy, req.Name, opts...)
+			case channelEntity.Private:
+				ch = channelEntity.NewPrivateChannel(teamID, req.CreatedBy, req.Name, opts...)
 			default:
 				response.Fail(c, errors.BadRequest("INVALID_ARGUMENT", "visibility must be public or private"))
 				return
@@ -214,7 +215,7 @@ func (h *ChannelHandler) Create() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.d.ChannelMemberPersister().AddChannelMember(c.Request.Context(), teamID, ch.ID, req.CreatedBy, channelDomain.Owner); err != nil {
+		if err := h.d.ChannelMemberPersister().AddChannelMember(c.Request.Context(), teamID, ch.ID, req.CreatedBy, channelEntity.Owner); err != nil {
 			log.Error("create channel owner: failed", zap.Stringer("team_id", teamID), zap.Stringer("channel_id", ch.ID), zap.Stringer("user_id", req.CreatedBy), zap.Error(err))
 			response.Fail(c, err)
 			return
@@ -246,12 +247,12 @@ func (h *ChannelHandler) Update() gin.HandlerFunc {
 			return
 		}
 
-		var visibility *channelDomain.VisibilityType
+		var visibility *channelEntity.VisibilityType
 		if req.Visibility != nil {
-			v := channelDomain.VisibilityType(*req.Visibility)
+			v := channelEntity.VisibilityType(*req.Visibility)
 			visibility = &v
 		}
-		updates := channelDomain.Update{
+		updates := channelRepo.Update{
 			Name:        req.Name,
 			Description: req.Description,
 			Visibility:  visibility,
