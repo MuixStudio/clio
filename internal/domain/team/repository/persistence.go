@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package team
+package repository
 
 import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/muixstudio/clio/internal/domain/team/entity"
 )
 
 type TeamUpdate struct {
@@ -34,13 +35,13 @@ type TeamRoleUpdate struct {
 
 type (
 	TeamPersister interface {
-		CreateTeam(ctx context.Context, t *Team) error
-		GetTeam(ctx context.Context, id uuid.UUID) (*Team, error)
-		GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]Team, error)
-		ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*Team, error)
+		CreateTeam(ctx context.Context, t *entity.Team) error
+		GetTeam(ctx context.Context, id uuid.UUID) (*entity.Team, error)
+		GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]entity.Team, error)
+		ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Team, error)
 		UpdateTeam(ctx context.Context, id uuid.UUID, update TeamUpdate) error
 		DeleteTeam(ctx context.Context, id uuid.UUID) error
-		ListTeams(ctx context.Context) ([]*Team, error)
+		ListTeams(ctx context.Context) ([]*entity.Team, error)
 	}
 	TeamPersisterProvider interface {
 		TeamPersister() TeamPersister
@@ -48,9 +49,9 @@ type (
 
 	TeamMemberPersister interface {
 		AddMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
-		GetMember(ctx context.Context, id uuid.UUID) (*TeamMember, error)
+		GetMember(ctx context.Context, id uuid.UUID) (*entity.TeamMember, error)
 		RemoveMember(ctx context.Context, id uuid.UUID) error
-		ListMembers(ctx context.Context, teamID uuid.UUID) ([]*TeamMember, error)
+		ListMembers(ctx context.Context, teamID uuid.UUID) ([]*entity.TeamMember, error)
 		//UpdateMemberRole(ctx context.Context, memberID uuid.UUID, roleID uuid.UUID) error
 	}
 	TeamMemberPersisterProvider interface {

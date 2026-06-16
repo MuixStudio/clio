@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package team
+package entity
 
 import (
 	"time"
@@ -22,12 +22,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type TeamRole struct {
-	ID           uuid.UUID
-	TeamID       uuid.UUID
-	Name         string
-	Description  string
-	IsSystemRole bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+type TeamMember struct {
+	ID     uuid.UUID
+	TeamID uuid.UUID
+	UserID uuid.UUID
+	Email  string
+	//RoleID    uuid.UUID
+	JoinedAt  time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

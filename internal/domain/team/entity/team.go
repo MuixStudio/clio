@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package channel
+package entity
 
 import (
 	"time"
@@ -22,20 +22,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type MemberRole string
-
-const (
-	Owner  MemberRole = "owner"
-	Admin  MemberRole = "admin"
-	Member MemberRole = "member"
-)
-
-type ChannelMember struct {
-	ID        uuid.UUID
-	TeamID    uuid.UUID
-	ChannelID uuid.UUID
-	UserID    uuid.UUID
-	Role      MemberRole
-	CreatedAt time.Time
-	UpdatedAt time.Time
+type Team struct {
+	ID          uuid.UUID
+	Name        string
+	Description string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
