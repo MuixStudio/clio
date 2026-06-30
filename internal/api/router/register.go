@@ -25,7 +25,6 @@ import (
 	v1Session "github.com/muixstudio/clio/internal/api/router/session/v1"
 	v1Team "github.com/muixstudio/clio/internal/api/router/team/v1"
 	v1Webhook "github.com/muixstudio/clio/internal/api/router/webhook/v1"
-	alertDomain "github.com/muixstudio/clio/internal/domain/alert"
 	alertRepo "github.com/muixstudio/clio/internal/domain/alert/repository"
 	"github.com/muixstudio/clio/internal/domain/channel/repository"
 	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
@@ -37,7 +36,6 @@ import (
 	recoveryFlow "github.com/muixstudio/clio/internal/flow/recovery"
 	registrationFlow "github.com/muixstudio/clio/internal/flow/registration"
 	verificationFlow "github.com/muixstudio/clio/internal/flow/verification"
-	alertRouter "github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/logger"
 	"github.com/muixstudio/clio/internal/session"
 )
@@ -45,10 +43,6 @@ import (
 type connectorDependencies interface {
 	connectorRepo.ConnectorPersisterProvider
 	alertRepo.AlertPersisterProvider
-	alertDomain.AlertPublisherProvider
-	alertRouter.RouteWriterProvider
-	alertRouter.RouteReloaderProvider
-	alertRouter.RouteTreeLoaderProvider
 	connectorDomain.ConnectorProviderProvider
 	repository.ChannelPersisterProvider
 	repository.ChannelMemberPersisterProvider

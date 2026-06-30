@@ -17,7 +17,6 @@
 package webhook
 
 import (
-	alertDomain "github.com/muixstudio/clio/internal/domain/alert"
 	"github.com/muixstudio/clio/internal/domain/alert/repository"
 	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
 	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
@@ -28,7 +27,6 @@ import (
 type dependencies interface {
 	connectorRepo.ConnectorPersisterProvider
 	repository.AlertPersisterProvider
-	alertDomain.AlertPublisherProvider
 	connectorDomain.ConnectorProviderProvider
 
 	logger.Logger

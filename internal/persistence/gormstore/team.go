@@ -23,6 +23,7 @@ import (
 	"github.com/muixstudio/clio/internal/domain/team/entity"
 	team2 "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/persistence/gormstore/model"
+	"gorm.io/datatypes"
 
 	"github.com/google/uuid"
 	"github.com/muixstudio/clio/internal/infra/errors"
@@ -462,3 +463,17 @@ func (gs *GormStore) ListMembers(ctx context.Context, teamID uuid.UUID) ([]*enti
 //	}
 //	return nil
 //}
+
+func rootAlertRoute(orgID uuid.NullUUID, teamID uuid.UUID) *model.AlertRoute {
+	return &model.AlertRoute{
+		ID:             uuid.New(),
+		OrganizationID: orgID,
+		TeamID:         teamID,
+		Name:           "root",
+		ParentID:       uuid.NullUUID{}, // NULL => root
+		Priority:       0,
+		Matchers:       datatypes.JSON("[]"),
+		Enabled:        true,
+		Continue:       false,
+	}
+}

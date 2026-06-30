@@ -19,7 +19,6 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/muixstudio/clio/internal/api/handler/webhook"
-	alertDomain "github.com/muixstudio/clio/internal/domain/alert"
 	"github.com/muixstudio/clio/internal/domain/alert/repository"
 	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
 	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
@@ -30,7 +29,6 @@ import (
 type connectorDependencies interface {
 	connectorRepo.ConnectorPersisterProvider
 	repository.AlertPersisterProvider
-	alertDomain.AlertPublisherProvider
 	connectorDomain.ConnectorProviderProvider
 
 	logger.Logger

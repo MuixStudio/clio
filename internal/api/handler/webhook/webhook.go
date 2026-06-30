@@ -90,7 +90,8 @@ func (h *WebhookHandler) Receive() gin.HandlerFunc {
 
 		// Publish only after persistence succeeds. The database remains the source
 		// of truth; dispatch can ack on receipt and rebuild/replay later if needed.
-		err = h.d.AlertPublisher().PublishAlerts(c.Request.Context(), alerts)
+
+		err = h.d.AlertPersister().Save(c.Request.Context(), alerts[0])
 		if err != nil {
 			log.Error("webhook receive: publish alerts failed", zap.String("type", routeType), zap.Error(err))
 			response.Fail(c, errors.InternalServerError("INTERNAL_SERVER_ERROR", "failed to publish alerts").WithCause(err))

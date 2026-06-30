@@ -34,7 +34,6 @@ import (
 	"fmt"
 
 	"github.com/muixstudio/clio/internal/courier"
-	alertDomain "github.com/muixstudio/clio/internal/domain/alert"
 	alertRepo "github.com/muixstudio/clio/internal/domain/alert/repository"
 	channelRepo "github.com/muixstudio/clio/internal/domain/channel/repository"
 	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
@@ -47,8 +46,6 @@ import (
 	regflow "github.com/muixstudio/clio/internal/flow/registration"
 	verflow "github.com/muixstudio/clio/internal/flow/verification"
 	"github.com/muixstudio/clio/internal/identity"
-	"github.com/muixstudio/clio/internal/infra/bus"
-	"github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/persistence"
 	"github.com/muixstudio/clio/internal/session"
 	codestrategy "github.com/muixstudio/clio/internal/strategy/code"
@@ -67,9 +64,6 @@ type Driver struct {
 	code *codestrategy.Strategy // nil if code not enabled in config
 
 	courier courier.Courier
-
-	bus         *bus.Bus
-	dispatchMgr *dispatch.Manager
 
 	loginHooks        *loginflow.HookExecutor
 	registrationHooks *regflow.HookExecutor
@@ -149,55 +143,8 @@ func New(cfg *config.Config, opts ...Option) *Driver {
 	d.verificationHooks = verflow.NewHookExecutor(d)
 	d.recoveryHooks = recflow.NewHookExecutor(d)
 
-	// In-process alert bus decoupling ingestion (webhook) from dispatch.
-	d.bus = bus.New(256)
-
 	return d
 }
-
-// AlertPublisher returns the publisher webhook ingestion uses to hand alerts to
-// the dispatch pipeline.
-func (d *Driver) AlertPublisher() alertDomain.AlertPublisher {
-	return dispatch.NewAlertPublisher(d.bus.Pub)
-}
-
-// StartAlertDispatch starts the dispatch manager's bus consumers. It must be
-// called before the HTTP server begins accepting webhooks, because the
-// in-process bus drops messages published with no subscriber. It returns once
-// the manager has subscribed; the manager then runs until ctx is cancelled or
-// StopAlertDispatch is called.
-func (d *Driver) StartAlertDispatch(ctx context.Context) error {
-	notifier := dispatch.NewLogNotifier(d.logger)
-	mgr, err := dispatch.NewManager(d.bus.Sub, d.store, notifier, d.logger)
-	if err != nil {
-		return err
-	}
-	d.dispatchMgr = mgr
-	return d.dispatchMgr.Start(ctx)
-}
-
-// StopAlertDispatch stops the dispatch manager and closes the bus.
-func (d *Driver) StopAlertDispatch() {
-	if d.dispatchMgr != nil {
-		d.dispatchMgr.Stop()
-	}
-	if d.bus != nil {
-		_ = d.bus.Close()
-	}
-}
-
-// AlertRouteWriter returns the route CRUD side: the store the HTTP handler
-// mutates synchronously before publishing a reload.
-func (d *Driver) AlertRouteWriter() dispatch.RouteWriter { return d.store }
-
-// AlertRouteReloader returns the reload side: a publisher that asks the dispatch
-// Manager to rebuild a team's Dispatcher from the persisted tree.
-func (d *Driver) AlertRouteReloader() dispatch.RouteReloader {
-	return dispatch.NewReloadPublisher(d.bus.Pub)
-}
-
-// AlertRouteLoader returns the query side for alert route trees.
-func (d *Driver) AlertRouteLoader() dispatch.RouteTreeLoader { return d.store }
 
 func (d *Driver) OIDCStrategy() *oidcstrategy.Strategy { return d.oidc }
 

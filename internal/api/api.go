@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
 	"github.com/muixstudio/clio/internal/api/router"
-	alertDomain "github.com/muixstudio/clio/internal/domain/alert"
 	alertRepo "github.com/muixstudio/clio/internal/domain/alert/repository"
 	"github.com/muixstudio/clio/internal/domain/channel/repository"
 	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
@@ -37,7 +36,6 @@ import (
 	verificationFlow "github.com/muixstudio/clio/internal/flow/verification"
 	cbinding "github.com/muixstudio/clio/internal/infra/binding"
 	"github.com/muixstudio/clio/internal/infra/orgctx"
-	alertRouter "github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/logger"
 	"github.com/muixstudio/clio/internal/session"
 )
@@ -45,10 +43,6 @@ import (
 type dependencies interface {
 	connectorRepo.ConnectorPersisterProvider
 	alertRepo.AlertPersisterProvider
-	alertDomain.AlertPublisherProvider
-	alertRouter.RouteWriterProvider
-	alertRouter.RouteReloaderProvider
-	alertRouter.RouteTreeLoaderProvider
 	connectorDomain.ConnectorProviderProvider
 	repository.ChannelPersisterProvider
 	repository.ChannelMemberPersisterProvider
