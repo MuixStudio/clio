@@ -21,10 +21,11 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/muixstudio/clio/internal/domain/alert/entity"
+	alert2 "github.com/muixstudio/clio/internal/domain/alert/repository"
 	"github.com/muixstudio/clio/internal/persistence/gormstore/model"
 
 	"github.com/google/uuid"
-	"github.com/muixstudio/clio/internal/alert"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -35,7 +36,7 @@ const DefaultFlapWindow = 5 * time.Minute
 
 // Save 将标准化之后的告警写入三张表
 // 幂等：重复推送不会产生新记录，但会记录重复次数
-func (gs *GormStore) Save(ctx context.Context, alert *alert.NormalizedAlert) error {
+func (gs *GormStore) Save(ctx context.Context, alert *entity.NormalizedAlert) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -47,7 +48,7 @@ func (gs *GormStore) Save(ctx context.Context, alert *alert.NormalizedAlert) err
 
 // SaveAlerts 批量保存标准化之后的告警，整批在同一个事务中完成
 // 幂等：重复推送不会产生新记录，但会记录重复次数
-func (gs *GormStore) SaveAlerts(ctx context.Context, alerts []*alert.NormalizedAlert) error {
+func (gs *GormStore) SaveAlerts(ctx context.Context, alerts []*entity.NormalizedAlert) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -62,7 +63,7 @@ func (gs *GormStore) SaveAlerts(ctx context.Context, alerts []*alert.NormalizedA
 	})
 }
 
-func saveAlert(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) error {
+func saveAlert(tx *gorm.DB, oid uuid.NullUUID, alert *entity.NormalizedAlert) error {
 	defID, err := upsertDefinition(tx, oid, alert)
 	if err != nil {
 		return err
@@ -91,7 +92,7 @@ func saveAlert(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) err
 //     无论是新插入还是命中冲突（DO UPDATE 会"触碰"该行，RETURNING 返回的就是既有行），
 //     def.ID 都指向 alert_definition 表中真实存在的主键，可作为返回值透传给 Alert.AlertDefinitionID。
 //     （注意 PostgreSQL 语义：DO UPDATE 才会 RETURNING 命中行，DO NOTHING 不会。）
-func upsertDefinition(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) (uuid.UUID, error) {
+func upsertDefinition(tx *gorm.DB, oid uuid.NullUUID, alert *entity.NormalizedAlert) (uuid.UUID, error) {
 	l, err := json.Marshal(alert.Labels)
 	if err != nil {
 		return uuid.Nil, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
@@ -153,7 +154,7 @@ func upsertDefinition(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAle
 //	      → createNewAlert：新建一条完整的触发记录
 //	        INSERT alerts
 //	        INSERT alert_events(firing)
-func handleFiring(tx *gorm.DB, oid uuid.NullUUID, defID uuid.UUID, alert *alert.NormalizedAlert) error {
+func handleFiring(tx *gorm.DB, oid uuid.NullUUID, defID uuid.UUID, alert *entity.NormalizedAlert) error {
 	// 先检查是否已存在完全相同的 (fingerprint, starts_at) 记录
 	var existing model.Alert
 	err := tx.Where(map[string]any{
@@ -202,7 +203,7 @@ func handleFiring(tx *gorm.DB, oid uuid.NullUUID, defID uuid.UUID, alert *alert.
 //  1. alert.EndsAt 不为 nil：用 Prometheus/Zabbix 给的实际恢复时间
 //  2. alert.EndsAt 为 nil：兜底用 time.Now()
 //     注意：不能用 alert.StartsAt 作为兜底，StartsAt 是告警开始时间，不是结束时间
-func handleResolved(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) error {
+func handleResolved(tx *gorm.DB, oid uuid.NullUUID, alert *entity.NormalizedAlert) error {
 	// 找到当前 firing 中的记录
 	var existing model.Alert
 	err := tx.Where(map[string]any{
@@ -252,7 +253,7 @@ func handleResolved(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert
 //	                                        Labels 已经存在 alert_definitions 里了
 //	}
 //	INSERT alert_events(firing)  ← 记录这次触发的起点，raw_payload 保留原始推送数据
-func createNewAlert(tx *gorm.DB, oid uuid.NullUUID, defID uuid.UUID, alert *alert.NormalizedAlert) error {
+func createNewAlert(tx *gorm.DB, oid uuid.NullUUID, defID uuid.UUID, alert *entity.NormalizedAlert) error {
 	l, err := json.Marshal(alert.Labels)
 	if err != nil {
 		return errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
@@ -290,7 +291,7 @@ func createNewAlert(tx *gorm.DB, oid uuid.NullUUID, defID uuid.UUID, alert *aler
 // isFlapping
 // 判断是否在抖动窗口内
 // 条件：同 fingerprint 最近一次 alert 在 FlapWindow 内刚 resolved
-func isFlapping(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) bool {
+func isFlapping(tx *gorm.DB, oid uuid.NullUUID, alert *entity.NormalizedAlert) bool {
 	var lastAlert model.Alert
 	err := tx.Where(map[string]any{
 		"fingerprint":     alert.Fingerprint,
@@ -312,7 +313,7 @@ func isFlapping(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) bo
 
 // handleFlapping
 // 抖动：复活上一条 alert，flap_count +1
-func handleFlapping(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert) error {
+func handleFlapping(tx *gorm.DB, oid uuid.NullUUID, alert *entity.NormalizedAlert) error {
 	var lastAlert model.Alert
 	if err := tx.Where(map[string]any{
 		"fingerprint":     alert.Fingerprint,
@@ -339,7 +340,7 @@ func handleFlapping(tx *gorm.DB, oid uuid.NullUUID, alert *alert.NormalizedAlert
 // reviveAlert
 // 同一次触发（相同 starts_at）从 resolved 变回 firing
 // 这种情况只在 Prometheus 重复推送时出现
-func reviveAlert(tx *gorm.DB, oid uuid.NullUUID, existing *model.Alert, alert *alert.NormalizedAlert) error {
+func reviveAlert(tx *gorm.DB, oid uuid.NullUUID, existing *model.Alert, alert *entity.NormalizedAlert) error {
 	if err := tx.Model(existing).Updates(map[string]any{
 		"status":     "firing",
 		"ends_at":    nil,
@@ -367,14 +368,14 @@ func insertEvent(tx *gorm.DB, oid uuid.NullUUID, alertID uuid.UUID, eventType mo
 	return nil
 }
 
-func (gs *GormStore) ListAlert(ctx context.Context, opts *alert.ListOptions) (alerts []*alert.NormalizedAlert, total int, err error) {
+func (gs *GormStore) ListAlert(ctx context.Context, opts *alert2.ListOptions) (alerts []*entity.NormalizedAlert, total int, err error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if opts == nil {
-		opts = &alert.ListOptions{}
+		opts = &alert2.ListOptions{}
 	}
 
 	page := opts.Page
@@ -425,7 +426,7 @@ func (gs *GormStore) ListAlert(ctx context.Context, opts *alert.ListOptions) (al
 		return nil, 0, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
 	}
 
-	alerts = make([]*alert.NormalizedAlert, 0, len(records))
+	alerts = make([]*entity.NormalizedAlert, 0, len(records))
 	for _, record := range records {
 		labels := map[string]string{}
 		if len(record.Labels) > 0 {
@@ -441,13 +442,13 @@ func (gs *GormStore) ListAlert(ctx context.Context, opts *alert.ListOptions) (al
 			}
 		}
 
-		alerts = append(alerts, &alert.NormalizedAlert{
+		alerts = append(alerts, &entity.NormalizedAlert{
 			ID:          record.ID,
 			Fingerprint: record.Fingerprint,
 			ConnectorID: record.ConnectorID,
 			TeamID:      record.TeamID,
-			Status:      alert.Status(record.Status),
-			Severity:    alert.Severity(record.Severity),
+			Status:      entity.Status(record.Status),
+			Severity:    entity.Severity(record.Severity),
 			Labels:      labels,
 			Annotations: annotations,
 			StartsAt:    record.StartsAt,

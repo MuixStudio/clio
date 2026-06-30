@@ -20,17 +20,18 @@ import (
 	"context"
 	"time"
 
+	"github.com/muixstudio/clio/internal/domain/team/entity"
+	team2 "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/persistence/gormstore/model"
 
 	"github.com/google/uuid"
 	"github.com/muixstudio/clio/internal/infra/errors"
-	"github.com/muixstudio/clio/internal/team"
 	"gorm.io/gorm"
 )
 
 // ── Team ──────────────────────────────────────────────────────────────────────
 
-func toTeamModel(t *team.Team) *model.Team {
+func toTeamModel(t *entity.Team) *model.Team {
 	return &model.Team{
 		ID:          t.ID,
 		Name:        t.Name,
@@ -38,8 +39,8 @@ func toTeamModel(t *team.Team) *model.Team {
 	}
 }
 
-func fromTeamModel(m *model.Team) *team.Team {
-	return &team.Team{
+func fromTeamModel(m *model.Team) *entity.Team {
+	return &entity.Team{
 		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
@@ -48,7 +49,7 @@ func fromTeamModel(m *model.Team) *team.Team {
 	}
 }
 
-func (gs *GormStore) CreateTeam(ctx context.Context, t *team.Team) error {
+func (gs *GormStore) CreateTeam(ctx context.Context, t *entity.Team) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -59,14 +60,22 @@ func (gs *GormStore) CreateTeam(ctx context.Context, t *team.Team) error {
 	}
 	m := toTeamModel(t)
 	m.OrganizationID = orgID
-	result := gs.db.WithContext(ctx).Create(m)
-	if result.Error != nil {
-		return errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
+
+	// Create the team together with its root alert route in one transaction:
+	// every team always owns exactly one root route, which can never be deleted.
+	err = gs.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(m).Error; err != nil {
+			return err
+		}
+		return tx.Create(rootAlertRoute(orgID, t.ID)).Error
+	})
+	if err != nil {
+		return errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
 	}
 	return nil
 }
 
-func (gs *GormStore) GetTeam(ctx context.Context, id uuid.UUID) (*team.Team, error) {
+func (gs *GormStore) GetTeam(ctx context.Context, id uuid.UUID) (*entity.Team, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -86,7 +95,7 @@ func (gs *GormStore) GetTeam(ctx context.Context, id uuid.UUID) (*team.Team, err
 	return fromTeamModel(&m), nil
 }
 
-func (gs *GormStore) GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]team.Team, error) {
+func (gs *GormStore) GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]entity.Team, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -99,14 +108,14 @@ func (gs *GormStore) GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]team.Te
 	if result.Error != nil {
 		return nil, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
 	}
-	teams := make([]team.Team, 0, len(models))
+	teams := make([]entity.Team, 0, len(models))
 	for i := range models {
 		teams = append(teams, *fromTeamModel(&models[i]))
 	}
 	return &teams, nil
 }
 
-func (gs *GormStore) ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*team.Team, error) {
+func (gs *GormStore) ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Team, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -120,14 +129,14 @@ func (gs *GormStore) ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([
 	if result.Error != nil {
 		return nil, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
 	}
-	teams := make([]*team.Team, 0, len(models))
+	teams := make([]*entity.Team, 0, len(models))
 	for i := range models {
 		teams = append(teams, fromTeamModel(&models[i]))
 	}
 	return teams, nil
 }
 
-func (gs *GormStore) UpdateTeam(ctx context.Context, id uuid.UUID, update team.TeamUpdate) error {
+func (gs *GormStore) UpdateTeam(ctx context.Context, id uuid.UUID, update team2.TeamUpdate) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -175,7 +184,7 @@ func (gs *GormStore) DeleteTeam(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (gs *GormStore) ListTeams(ctx context.Context) ([]*team.Team, error) {
+func (gs *GormStore) ListTeams(ctx context.Context) ([]*entity.Team, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -188,7 +197,7 @@ func (gs *GormStore) ListTeams(ctx context.Context) ([]*team.Team, error) {
 	if result.Error != nil {
 		return nil, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
 	}
-	teams := make([]*team.Team, 0, len(models))
+	teams := make([]*entity.Team, 0, len(models))
 	for i := range models {
 		teams = append(teams, fromTeamModel(&models[i]))
 	}
@@ -334,8 +343,8 @@ func (gs *GormStore) ListTeams(ctx context.Context) ([]*team.Team, error) {
 
 // ── TeamMember ────────────────────────────────────────────────────────────────
 
-func fromTeamMemberModel(m *model.TeamMember) (*team.TeamMember, error) {
-	return &team.TeamMember{
+func fromTeamMemberModel(m *model.TeamMember) (*entity.TeamMember, error) {
+	return &entity.TeamMember{
 		ID:     m.ID,
 		TeamID: m.TeamID,
 		UserID: m.UserID,
@@ -367,7 +376,7 @@ func (gs *GormStore) AddMember(ctx context.Context, teamID uuid.UUID, userID uui
 	return nil
 }
 
-func (gs *GormStore) GetMember(ctx context.Context, id uuid.UUID) (*team.TeamMember, error) {
+func (gs *GormStore) GetMember(ctx context.Context, id uuid.UUID) (*entity.TeamMember, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -406,7 +415,7 @@ func (gs *GormStore) RemoveMember(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (gs *GormStore) ListMembers(ctx context.Context, teamID uuid.UUID) ([]*team.TeamMember, error) {
+func (gs *GormStore) ListMembers(ctx context.Context, teamID uuid.UUID) ([]*entity.TeamMember, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -422,7 +431,7 @@ func (gs *GormStore) ListMembers(ctx context.Context, teamID uuid.UUID) ([]*team
 	if result.Error != nil {
 		return nil, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
 	}
-	members := make([]*team.TeamMember, 0, len(models))
+	members := make([]*entity.TeamMember, 0, len(models))
 	for i := range models {
 		member, err := fromTeamMemberModel(&models[i])
 		if err != nil {

@@ -62,22 +62,43 @@ type ChannelMember struct {
 
 func (ChannelMember) TableName() string { return "channel_members" }
 
-// AlertRoute 表示一条告警路由规则。
+// AlertRoute 表示告警路由树的一个节点。
 //
-// 路由规则用于判断某条告警应该发送到哪些 Channel。
+// 路由是一棵树：根节点 ParentID 为 NULL，其余节点通过 ParentID 指向父节点。
+// 一条告警从根开始深度优先匹配，命中某节点后会继续尝试它的子节点。
 // Matchers 保存匹配条件，通常匹配告警 labels / severity / connector_id 等字段。
-// Priority 控制匹配顺序，值越小越先匹配；Continue 表示命中本规则后是否继续匹配后续规则。
+// 同一父节点下的兄弟节点按 Priority 升序匹配（值越小越先匹配）；
+// Continue 表示命中本节点后是否继续匹配同级后续节点。
+//
+// Receiver/GroupBy/GroupByAll/各 timer/MuteTimeIntervals/ActiveTimeIntervals
+// 对应 RouteOpts：为空（指针为 nil 或 JSON 为空）时继承父节点的取值。
+// 运行时的后序序号 Idx 不持久化，由 router.BuildTree 每次重建时计算。
 type AlertRoute struct {
-	ID             uuid.UUID      `gorm:"primaryKey;column:id;type:uuid;comment:primary key"`
-	OrganizationID uuid.NullUUID  `gorm:"column:organization_id;index;type:uuid;default:null;comment:FK to organizations"`
-	TeamID         uuid.UUID      `gorm:"column:team_id;type:uuid;not null;index:idx_alert_routes_team_id;comment:FK to teams"`
-	Name           string         `gorm:"column:name;type:varchar(128);not null;comment:route name"`
-	Priority       int            `gorm:"column:priority;not null;default:0;index:idx_alert_routes_priority;comment:lower value matches first"`
-	Matchers       datatypes.JSON `gorm:"column:matchers;type:jsonb;not null;comment:alert label matchers"`
-	Enabled        bool           `gorm:"column:enabled;not null;default:true;comment:route is enabled"`
-	Continue       bool           `gorm:"column:continue;not null;default:false;comment:continue matching following routes"`
-	CreatedAt      time.Time      `gorm:"column:created_at;autoCreateTime;comment:record creation time"`
-	UpdatedAt      time.Time      `gorm:"column:updated_at;autoUpdateTime;comment:record last update time"`
+	ID             uuid.UUID     `gorm:"primaryKey;column:id;type:uuid;comment:primary key"`
+	OrganizationID uuid.NullUUID `gorm:"column:organization_id;index;type:uuid;default:null;comment:FK to organizations"`
+	TeamID         uuid.UUID     `gorm:"column:team_id;type:uuid;not null;index:idx_alert_routes_team_id;comment:FK to teams"`
+	Name           string        `gorm:"column:name;type:varchar(128);not null;comment:route name"`
+
+	// 树结构：ParentID 为 NULL 表示根节点；同级用 Priority 排序。
+	ParentID uuid.NullUUID `gorm:"column:parent_id;type:uuid;default:null;index:idx_alert_routes_parent_id;comment:parent route, NULL means root"`
+	Priority int           `gorm:"column:priority;not null;default:0;index:idx_alert_routes_priority;comment:order among siblings, lower matches first"`
+
+	Matchers datatypes.JSON `gorm:"column:matchers;type:jsonb;not null;comment:alert label matchers"`
+	Enabled  bool           `gorm:"column:enabled;not null;default:true;comment:route is enabled"`
+	Continue bool           `gorm:"column:continue;not null;default:false;comment:continue matching following sibling routes"`
+
+	// RouteOpts：均可继承父节点，为空时不覆盖父节点取值。
+	Receiver            string         `gorm:"column:receiver;type:varchar(128);comment:notification receiver, empty inherits parent"`
+	GroupBy             datatypes.JSON `gorm:"column:group_by;type:jsonb;comment:label names to group by, empty inherits parent"`
+	GroupByAll          bool           `gorm:"column:group_by_all;not null;default:false;comment:group by all labels"`
+	GroupWait           *int64         `gorm:"column:group_wait;comment:group wait in ns, NULL inherits parent"`
+	GroupInterval       *int64         `gorm:"column:group_interval;comment:group interval in ns, NULL inherits parent"`
+	RepeatInterval      *int64         `gorm:"column:repeat_interval;comment:repeat interval in ns, NULL inherits parent"`
+	MuteTimeIntervals   datatypes.JSON `gorm:"column:mute_time_intervals;type:jsonb;comment:muted time interval names"`
+	ActiveTimeIntervals datatypes.JSON `gorm:"column:active_time_intervals;type:jsonb;comment:active time interval names"`
+
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime;comment:record creation time"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime;comment:record last update time"`
 }
 
 func (AlertRoute) TableName() string { return "alert_routes" }

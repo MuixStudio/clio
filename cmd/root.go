@@ -89,6 +89,13 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize engine: %w", err)
 	}
 
+	dispatchCtx, stopDispatch := context.WithCancel(context.Background())
+	defer stopDispatch()
+	if err := d.StartAlertDispatch(dispatchCtx); err != nil {
+		return fmt.Errorf("failed to start alert dispatch: %w", err)
+	}
+	defer d.StopAlertDispatch()
+
 	//Create HTTP server
 	srv := &http.Server{
 		Addr:    cfg.Addr(),

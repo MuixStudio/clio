@@ -37,6 +37,7 @@ import (
 	verificationFlow "github.com/muixstudio/clio/internal/flow/verification"
 	cbinding "github.com/muixstudio/clio/internal/infra/binding"
 	"github.com/muixstudio/clio/internal/infra/orgctx"
+	alertRouter "github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/logger"
 	"github.com/muixstudio/clio/internal/session"
 )
@@ -45,6 +46,9 @@ type dependencies interface {
 	connectorRepo.ConnectorPersisterProvider
 	alertRepo.AlertPersisterProvider
 	alertDomain.AlertPublisherProvider
+	alertRouter.RouteWriterProvider
+	alertRouter.RouteReloaderProvider
+	alertRouter.RouteTreeLoaderProvider
 	connectorDomain.ConnectorProviderProvider
 	repository.ChannelPersisterProvider
 	repository.ChannelMemberPersisterProvider

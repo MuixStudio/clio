@@ -37,6 +37,7 @@ import (
 	recoveryFlow "github.com/muixstudio/clio/internal/flow/recovery"
 	registrationFlow "github.com/muixstudio/clio/internal/flow/registration"
 	verificationFlow "github.com/muixstudio/clio/internal/flow/verification"
+	alertRouter "github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/logger"
 	"github.com/muixstudio/clio/internal/session"
 )
@@ -45,6 +46,9 @@ type connectorDependencies interface {
 	connectorRepo.ConnectorPersisterProvider
 	alertRepo.AlertPersisterProvider
 	alertDomain.AlertPublisherProvider
+	alertRouter.RouteWriterProvider
+	alertRouter.RouteReloaderProvider
+	alertRouter.RouteTreeLoaderProvider
 	connectorDomain.ConnectorProviderProvider
 	repository.ChannelPersisterProvider
 	repository.ChannelMemberPersisterProvider
