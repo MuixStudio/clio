@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package connector
+package repository
 
 import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/muixstudio/clio/internal/domain/connector/entity"
 )
 
 type Update struct {
@@ -45,11 +46,11 @@ type (
 	// ConnectorPersister manages connector factories and live connector instances.
 	ConnectorPersister interface {
 		// Create persists a new ConnectorRecord and returns the live Connector.
-		CreateConnector(ctx context.Context, c *Connector) error
+		CreateConnector(ctx context.Context, c *entity.Connector) error
 		// Get retrieves a live Connector by ID, loading from DB on cache miss.
-		GetConnector(ctx context.Context, id uuid.UUID) (*Connector, error)
+		GetConnector(ctx context.Context, id uuid.UUID) (*entity.Connector, error)
 		// List returns all persisted ConnectorRecords.
-		ListConnectors(ctx context.Context, options *ListOptions) ([]*Connector, error)
+		ListConnectors(ctx context.Context, options *ListOptions) ([]*entity.Connector, error)
 		// UpdateConnector updates a connector's mutable fields.
 		UpdateConnector(ctx context.Context, id uuid.UUID, updates *Update) error
 		DeleteConnector(ctx context.Context, id uuid.UUID, teamID uuid.UUID) error

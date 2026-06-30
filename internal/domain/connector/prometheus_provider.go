@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/muixstudio/clio/internal/alert"
+	"github.com/muixstudio/clio/internal/domain/alert/entity"
 )
 
 // ============================================================
@@ -65,7 +65,7 @@ func NewPrometheusNormalizer() *PrometheusNormalizer {
 	return &PrometheusNormalizer{}
 }
 
-func (n *PrometheusNormalizer) Normalize(raw []byte) ([]*alert.NormalizedAlert, error) {
+func (n *PrometheusNormalizer) Normalize(raw []byte) ([]*entity.NormalizedAlert, error) {
 	var payload PrometheusWebhookPayload
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal prometheus payload: %w", err)
@@ -75,7 +75,7 @@ func (n *PrometheusNormalizer) Normalize(raw []byte) ([]*alert.NormalizedAlert, 
 		return nil, fmt.Errorf("prometheus payload contains no alerts")
 	}
 
-	results := make([]*alert.NormalizedAlert, 0, len(payload.Alerts))
+	results := make([]*entity.NormalizedAlert, 0, len(payload.Alerts))
 	for _, alert := range payload.Alerts {
 		normalized, err := n.normalizeAlert(alert)
 		if err != nil {
@@ -91,7 +91,7 @@ func (n *PrometheusNormalizer) Type() string {
 	return "prometheus"
 }
 
-func (n *PrometheusNormalizer) normalizeAlert(pa PrometheusAlert) (*alert.NormalizedAlert, error) {
+func (n *PrometheusNormalizer) normalizeAlert(pa PrometheusAlert) (*entity.NormalizedAlert, error) {
 	status, err := mapPrometheusStatus(pa.Status)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (n *PrometheusNormalizer) normalizeAlert(pa PrometheusAlert) (*alert.Normal
 		annotations[k] = v
 	}
 
-	return &alert.NormalizedAlert{
+	return &entity.NormalizedAlert{
 		ID:          uuid.New(),
 		Fingerprint: fingerprint,
 		//ConnectorId:    uuid.NullUUID{},
@@ -129,18 +129,18 @@ func (n *PrometheusNormalizer) normalizeAlert(pa PrometheusAlert) (*alert.Normal
 	}, nil
 }
 
-func mapPrometheusStatus(status string) (alert.Status, error) {
+func mapPrometheusStatus(status string) (entity.Status, error) {
 	switch status {
 	case "firing":
-		return alert.StatusFiring, nil
+		return entity.StatusFiring, nil
 	case "resolved":
-		return alert.StatusResolved, nil
+		return entity.StatusResolved, nil
 	default:
 		return "", fmt.Errorf("unknown prometheus status: %s", status)
 	}
 }
 
-func extractEndsAt(status alert.Status, endsAt time.Time) *time.Time {
+func extractEndsAt(status entity.Status, endsAt time.Time) *time.Time {
 	if status != "resolved" {
 		return nil
 	}
@@ -150,20 +150,20 @@ func extractEndsAt(status alert.Status, endsAt time.Time) *time.Time {
 	return &endsAt
 }
 
-func extractSeverity(labels map[string]string) alert.Severity {
+func extractSeverity(labels map[string]string) entity.Severity {
 	raw, ok := labels["severity"]
 	if !ok || raw == "" {
 		return "info"
 	}
 	switch strings.ToLower(raw) {
 	case "critical", "crit", "p1":
-		return alert.SeverityCritical
+		return entity.SeverityCritical
 	case "warning", "warn", "p2":
-		return alert.SeverityHigh
+		return entity.SeverityHigh
 	case "info", "information", "p3":
-		return alert.SeverityMedium
+		return entity.SeverityMedium
 	default:
-		return alert.SeverityLow
+		return entity.SeverityLow
 	}
 }
 

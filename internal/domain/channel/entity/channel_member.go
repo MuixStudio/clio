@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-package connector
+package entity
 
-// Factory creates Connector instances for one connector type.
-// type Factory interface {
-// 	// ConnectorType is the string this factory handles, e.g. "prometheus".
-// 	ConnectorType() string
-// 	// Create builds a live Connector from the persisted record.
-// 	Create(record *model.ConnectorRecord) (Connector, error)
-// }
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type MemberRole string
+
+const (
+	Owner  MemberRole = "owner"
+	Admin  MemberRole = "admin"
+	Member MemberRole = "member"
+)
+
+type ChannelMember struct {
+	ID        uuid.UUID
+	TeamID    uuid.UUID
+	ChannelID uuid.UUID
+	UserID    uuid.UUID
+	Role      MemberRole
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}

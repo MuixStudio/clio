@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package alert
+package repository
 
 import (
 	"context"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/muixstudio/clio/internal/domain/alert/entity"
 )
 
 type ListOptions struct {
 	Page, PageSize int
-	Status         *Status
-	Severity       *Severity
+	Status         *entity.Status
+	Severity       *entity.Severity
 	TeamID         *uuid.UUID
 	ConnectorID    *uuid.UUID
 	StartAt        *time.Time // 筛选时间段的开始时间
@@ -35,9 +36,9 @@ type ListOptions struct {
 
 type (
 	AlertPersister interface {
-		Save(ctx context.Context, alert *NormalizedAlert) error
-		SaveAlerts(ctx context.Context, alerts []*NormalizedAlert) error
-		ListAlert(ctx context.Context, opts *ListOptions) (alerts []*NormalizedAlert, total int, err error)
+		Save(ctx context.Context, alert *entity.NormalizedAlert) error
+		SaveAlerts(ctx context.Context, alerts []*entity.NormalizedAlert) error
+		ListAlert(ctx context.Context, opts *ListOptions) (alerts []*entity.NormalizedAlert, total int, err error)
 	}
 	AlertPersisterProvider interface {
 		AlertPersister() AlertPersister

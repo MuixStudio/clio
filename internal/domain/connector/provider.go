@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package team
+package connector
 
 import (
-	"time"
-
-	"github.com/google/uuid"
+	"github.com/muixstudio/clio/internal/domain/alert/entity"
 )
 
-type Team struct {
-	ID          uuid.UUID
-	Name        string
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+// ConnectorI is a configured instance of an alert source integration.
+// Each concrete implementation handles one source type (e.g. Prometheus, Zabbix).
+type ConnectorProvider interface {
+	// Type returns the source type string, e.g. "prometheus".
+	Type() string
+	// Receive parses the raw HTTP payload and returns normalized Alerts.
+	Normalize(raw []byte) ([]*entity.NormalizedAlert, error)
+}
+
+type ConnectorProviderProvider interface {
+	ConnectorProviders() map[string]ConnectorProvider
 }

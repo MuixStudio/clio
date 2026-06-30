@@ -17,17 +17,18 @@
 package connector
 
 import (
-	"github.com/muixstudio/clio/internal/alert"
-	"github.com/muixstudio/clio/internal/connector"
+	"github.com/muixstudio/clio/internal/domain/alert/repository"
+	connectorDomain "github.com/muixstudio/clio/internal/domain/connector"
+	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
 	"github.com/muixstudio/clio/internal/driver/config"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
-	connector.ConnectorPersisterProvider
-	alert.AlertPersisterProvider
+	connectorRepo.ConnectorPersisterProvider
+	repository.AlertPersisterProvider
 
-	connector.ConnectorProviderProvider
+	connectorDomain.ConnectorProviderProvider
 
 	logger.Logger
 	config.Provider

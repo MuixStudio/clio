@@ -22,7 +22,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
-	"github.com/muixstudio/clio/internal/alert"
+	alertEntity "github.com/muixstudio/clio/internal/domain/alert/entity"
+	alertRepo "github.com/muixstudio/clio/internal/domain/alert/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
@@ -59,7 +60,7 @@ type alertResponse struct {
 	Alerts []alertItem `json:"alerts"`
 }
 
-func toAlertItem(a *alert.NormalizedAlert) alertItem {
+func toAlertItem(a *alertEntity.NormalizedAlert) alertItem {
 	var endsAt time.Time
 	if a.EndsAt != nil {
 		endsAt = *a.EndsAt
@@ -100,7 +101,7 @@ func (h *AlertHandler) List() gin.HandlerFunc {
 			return
 		}
 
-		options := alert.ListOptions{
+		options := alertRepo.ListOptions{
 			Page:     1,
 			PageSize: 20,
 			TeamID:   &teamID,
@@ -112,11 +113,11 @@ func (h *AlertHandler) List() gin.HandlerFunc {
 			options.PageSize = *req.PageSize
 		}
 		if req.Status != nil {
-			status := alert.Status(*req.Status)
+			status := alertEntity.Status(*req.Status)
 			options.Status = &status
 		}
 		if req.Severity != nil {
-			severity := alert.Severity(*req.Severity)
+			severity := alertEntity.Severity(*req.Severity)
 			options.Severity = &severity
 		}
 		if req.ConnectorID != nil {

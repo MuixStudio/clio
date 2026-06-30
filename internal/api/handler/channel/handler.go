@@ -17,13 +17,13 @@
 package channel
 
 import (
-	channelDomain "github.com/muixstudio/clio/internal/channel"
+	channelRepo "github.com/muixstudio/clio/internal/domain/channel/repository"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
-	channelDomain.ChannelPersisterProvider
-	channelDomain.ChannelMemberPersisterProvider
+	channelRepo.ChannelPersisterProvider
+	channelRepo.ChannelMemberPersisterProvider
 
 	logger.Logger
 }

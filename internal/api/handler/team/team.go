@@ -22,9 +22,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
+	teamEntity "github.com/muixstudio/clio/internal/domain/team/entity"
+	teamRepo "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"github.com/muixstudio/clio/internal/infra/response"
-	"github.com/muixstudio/clio/internal/team"
 	"go.uber.org/zap"
 )
 
@@ -98,7 +99,7 @@ func (h *TeamHandler) Create() gin.HandlerFunc {
 			return
 		}
 
-		t := &team.Team{Name: req.Name}
+		t := &teamEntity.Team{Name: req.Name}
 		if req.Description != nil {
 			t.Description = *req.Description
 		}
@@ -138,7 +139,7 @@ func (h *TeamHandler) Update() gin.HandlerFunc {
 			return
 		}
 
-		update := team.TeamUpdate{
+		update := teamRepo.TeamUpdate{
 			Name:        req.Name,
 			Description: req.Description,
 		}

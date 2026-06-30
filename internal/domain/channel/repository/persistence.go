@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package channel
+package repository
 
 import (
 	"context"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/muixstudio/clio/internal/domain/channel/entity"
 )
 
 type Update struct {
 	Name        *string
 	Description *string
-	Visibility  *VisibilityType
+	Visibility  *entity.VisibilityType
 	Enabled     *bool
 	IsDefault   *bool
 }
@@ -40,9 +41,9 @@ type ListOptions struct {
 
 type (
 	ChannelPersister interface {
-		AddChannel(ctx context.Context, channel *Channel) error
-		GetChannelByID(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID) (*Channel, error)
-		ListChannels(ctx context.Context, teamID uuid.UUID, userID uuid.UUID, opts *ListOptions) (channels []*Channel, total int, err error)
+		AddChannel(ctx context.Context, channel *entity.Channel) error
+		GetChannelByID(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID) (*entity.Channel, error)
+		ListChannels(ctx context.Context, teamID uuid.UUID, userID uuid.UUID, opts *ListOptions) (channels []*entity.Channel, total int, err error)
 		UpdateChannel(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID, updates *Update) error
 		DeleteChannelByID(ctx context.Context, teamID uuid.UUID, channelID uuid.UUID) error
 	}
@@ -51,10 +52,10 @@ type (
 	}
 
 	ChannelMemberPersister interface {
-		AddChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID, role MemberRole) error
-		GetChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID) (*ChannelMember, error)
-		ListChannelMembers(ctx context.Context, teamID, channelID uuid.UUID) (members []*ChannelMember, total int, err error)
-		UpdateChannelMemberRole(ctx context.Context, teamID, channelID, userID uuid.UUID, role MemberRole) error
+		AddChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID, role entity.MemberRole) error
+		GetChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID) (*entity.ChannelMember, error)
+		ListChannelMembers(ctx context.Context, teamID, channelID uuid.UUID) (members []*entity.ChannelMember, total int, err error)
+		UpdateChannelMemberRole(ctx context.Context, teamID, channelID, userID uuid.UUID, role entity.MemberRole) error
 		RemoveChannelMember(ctx context.Context, teamID, channelID, userID uuid.UUID) error
 	}
 	ChannelMemberPersisterProvider interface {

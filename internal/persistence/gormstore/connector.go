@@ -20,15 +20,16 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/muixstudio/clio/internal/domain/connector/entity"
+	connector2 "github.com/muixstudio/clio/internal/domain/connector/repository"
 	"github.com/muixstudio/clio/internal/persistence/gormstore/model"
 
 	"github.com/google/uuid"
-	"github.com/muixstudio/clio/internal/connector"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"gorm.io/gorm"
 )
 
-func toConnectorModel(c *connector.Connector) *model.Connector {
+func toConnectorModel(c *entity.Connector) *model.Connector {
 	labels, _ := json.Marshal(c.Labels)
 	return &model.Connector{
 		ID:      c.ID,
@@ -41,10 +42,10 @@ func toConnectorModel(c *connector.Connector) *model.Connector {
 	}
 }
 
-func fromConnectorModel(m *model.Connector) *connector.Connector {
+func fromConnectorModel(m *model.Connector) *entity.Connector {
 	var labels map[string]string
 	_ = json.Unmarshal(m.Labels, &labels)
-	return &connector.Connector{
+	return &entity.Connector{
 		ID:        m.ID,
 		Type:      m.Type,
 		Name:      m.Name,
@@ -57,7 +58,7 @@ func fromConnectorModel(m *model.Connector) *connector.Connector {
 	}
 }
 
-func (gs *GormStore) CreateConnector(ctx context.Context, c *connector.Connector) error {
+func (gs *GormStore) CreateConnector(ctx context.Context, c *entity.Connector) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -75,7 +76,7 @@ func (gs *GormStore) CreateConnector(ctx context.Context, c *connector.Connector
 	return nil
 }
 
-func (gs *GormStore) GetConnector(ctx context.Context, id uuid.UUID) (*connector.Connector, error) {
+func (gs *GormStore) GetConnector(ctx context.Context, id uuid.UUID) (*entity.Connector, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (gs *GormStore) GetConnector(ctx context.Context, id uuid.UUID) (*connector
 	return fromConnectorModel(&m), nil
 }
 
-func (gs *GormStore) UpdateConnector(ctx context.Context, id uuid.UUID, update *connector.Update) error {
+func (gs *GormStore) UpdateConnector(ctx context.Context, id uuid.UUID, update *connector2.Update) error {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return err
@@ -132,7 +133,7 @@ func (gs *GormStore) UpdateConnector(ctx context.Context, id uuid.UUID, update *
 	return nil
 }
 
-func (gs *GormStore) Count(ctx context.Context, options connector.CountOptions) (int64, error) {
+func (gs *GormStore) Count(ctx context.Context, options connector2.CountOptions) (int64, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return 0, err
@@ -161,7 +162,7 @@ func (gs *GormStore) Count(ctx context.Context, options connector.CountOptions) 
 	return count, nil
 }
 
-func (gs *GormStore) ListConnectors(ctx context.Context, options *connector.ListOptions) ([]*connector.Connector, error) {
+func (gs *GormStore) ListConnectors(ctx context.Context, options *connector2.ListOptions) ([]*entity.Connector, error) {
 	orgID, err := gs.orgIDFromCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -193,7 +194,7 @@ func (gs *GormStore) ListConnectors(ctx context.Context, options *connector.List
 	if result.Error != nil {
 		return nil, errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
 	}
-	connectors := make([]*connector.Connector, 0, len(models))
+	connectors := make([]*entity.Connector, 0, len(models))
 	for i := range models {
 		connectors = append(connectors, fromConnectorModel(&models[i]))
 	}

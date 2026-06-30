@@ -17,12 +17,12 @@
 package alert
 
 import (
-	"github.com/muixstudio/clio/internal/alert"
+	"github.com/muixstudio/clio/internal/domain/alert/repository"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
-	alert.AlertPersisterProvider
+	repository.AlertPersisterProvider
 
 	logger.Logger
 }

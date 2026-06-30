@@ -22,7 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
-	channelDomain "github.com/muixstudio/clio/internal/channel"
+	channelEntity "github.com/muixstudio/clio/internal/domain/channel/entity"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
 )
@@ -52,7 +52,7 @@ type channelMemberListResponse struct {
 	Members []channelMemberItem `json:"members"`
 }
 
-func toChannelMemberItem(member *channelDomain.ChannelMember) channelMemberItem {
+func toChannelMemberItem(member *channelEntity.ChannelMember) channelMemberItem {
 	return channelMemberItem{
 		ID:        member.ID,
 		TeamID:    member.TeamID,
@@ -118,9 +118,9 @@ func (h *ChannelHandler) AddMember() gin.HandlerFunc {
 			return
 		}
 
-		role := channelDomain.Member
+		role := channelEntity.Member
 		if req.Role != nil {
-			role = channelDomain.MemberRole(*req.Role)
+			role = channelEntity.MemberRole(*req.Role)
 		}
 		if err := h.d.ChannelMemberPersister().AddChannelMember(c.Request.Context(), teamID, channelID, req.UserID, role); err != nil {
 			log.Error("add channel member: failed", zap.Stringer("team_id", teamID), zap.Stringer("channel_id", channelID), zap.Stringer("user_id", req.UserID), zap.Error(err))
@@ -187,7 +187,7 @@ func (h *ChannelHandler) UpdateMemberRole() gin.HandlerFunc {
 			return
 		}
 
-		role := channelDomain.MemberRole(req.Role)
+		role := channelEntity.MemberRole(req.Role)
 		if err := h.d.ChannelMemberPersister().UpdateChannelMemberRole(c.Request.Context(), teamID, channelID, userID, role); err != nil {
 			log.Error("update channel member role: failed", zap.Stringer("team_id", teamID), zap.Stringer("channel_id", channelID), zap.Stringer("user_id", userID), zap.String("role", req.Role), zap.Error(err))
 			response.Fail(c, err)

@@ -23,7 +23,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
-	"github.com/muixstudio/clio/internal/connector"
+	connectorEntity "github.com/muixstudio/clio/internal/domain/connector/entity"
+	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
@@ -92,11 +93,11 @@ func (h *ConnectorHandler) Create() gin.HandlerFunc {
 			return
 		}
 
-		conn := connector.NewConnector(
+		conn := connectorEntity.NewConnector(
 			req.Name,
 			req.Type,
-			connector.WithTeamID(teamID),
-			connector.WithLabels(req.Labels),
+			connectorEntity.WithTeamID(teamID),
+			connectorEntity.WithLabels(req.Labels),
 		)
 
 		if err := h.d.ConnectorPersister().CreateConnector(c.Request.Context(), conn); err != nil {
@@ -141,7 +142,7 @@ func (h *ConnectorHandler) Update() gin.HandlerFunc {
 			return
 		}
 
-		updates := connector.Update{
+		updates := connectorRepo.Update{
 			Name:    req.Name,
 			Enabled: req.Enabled,
 			TeamID:  &teamID,
@@ -175,7 +176,7 @@ func (h *ConnectorHandler) Count() gin.HandlerFunc {
 			return
 		}
 
-		options := connector.CountOptions{
+		options := connectorRepo.CountOptions{
 			Type:   &connectorType,
 			TeamID: &teamID,
 		}
@@ -246,7 +247,7 @@ func (h *ConnectorHandler) List() gin.HandlerFunc {
 			return
 		}
 
-		options := connector.ListOptions{
+		options := connectorRepo.ListOptions{
 			Page:     1,
 			PageSize: 20,
 			TeamID:   &teamID,
