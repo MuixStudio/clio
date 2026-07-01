@@ -17,9 +17,15 @@
 package persistence
 
 import (
-	"github.com/muixstudio/clio/internal/alert"
-	"github.com/muixstudio/clio/internal/channel"
-	"github.com/muixstudio/clio/internal/connector"
+	"context"
+
+	"github.com/google/uuid"
+	repository2 "github.com/muixstudio/clio/internal/domain/alert/repository"
+	"github.com/muixstudio/clio/internal/domain/channel/repository"
+	repository3 "github.com/muixstudio/clio/internal/domain/connector/repository"
+	repository4 "github.com/muixstudio/clio/internal/domain/team/repository"
+	"github.com/muixstudio/clio/internal/infra/zus/dispatch"
+
 	loginFlow "github.com/muixstudio/clio/internal/flow/login"
 	logoutLfow "github.com/muixstudio/clio/internal/flow/logout"
 	recoveryFlow "github.com/muixstudio/clio/internal/flow/recovery"
@@ -28,16 +34,25 @@ import (
 	"github.com/muixstudio/clio/internal/identity"
 	"github.com/muixstudio/clio/internal/session"
 	codestrategy "github.com/muixstudio/clio/internal/strategy/code"
-	"github.com/muixstudio/clio/internal/team"
 )
 
+// AlertRoutePersister manages alert route rows and loads a team's routing tree
+// for the dispatcher.
+type AlertRoutePersister interface {
+	LoadAlertRouteTree(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID) (*dispatch.Route, error)
+	AddAlertRoute(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, in dispatch.AddRouteInput) (uuid.UUID, error)
+	UpdateAlertRoute(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, in dispatch.UpdateRouteInput) error
+	DeleteAlertRoute(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, routeID uuid.UUID) error
+}
+
 type Store interface {
-	connector.ConnectorPersister
-	alert.AlertPersister
-	channel.ChannelPersister
-	channel.ChannelMemberPersister
-	team.TeamPersister
-	team.TeamMemberPersister
+	repository3.ConnectorPersister
+	repository2.AlertPersister
+	AlertRoutePersister
+	repository.ChannelPersister
+	repository.ChannelMemberPersister
+	repository4.TeamPersister
+	repository4.TeamMemberPersister
 
 	session.SessionPersister
 	session.SessionTokenExchangeCodePersister

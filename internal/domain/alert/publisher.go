@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package connector
+package alert
 
 import (
-	"github.com/muixstudio/clio/internal/alert"
+	"context"
+
+	"github.com/muixstudio/clio/internal/domain/alert/entity"
 )
 
-// ConnectorI is a configured instance of an alert source integration.
-// Each concrete implementation handles one source type (e.g. Prometheus, Zabbix).
-type ConnectorProvider interface {
-	// Type returns the source type string, e.g. "prometheus".
-	Type() string
-	// Receive parses the raw HTTP payload and returns normalized Alerts.
-	Normalize(raw []byte) ([]*alert.NormalizedAlert, error)
+// AlertPublisher publishes normalized alerts onto the dispatch bus. It is the
+// seam that decouples ingestion (webhook) from dispatch (routing/grouping).
+type AlertPublisher interface {
+	PublishAlerts(ctx context.Context, alerts []*entity.NormalizedAlert) error
 }
 
-type ConnectorProviderProvider interface {
-	ConnectorProviders() map[string]ConnectorProvider
+// AlertPublisherProvider exposes an AlertPublisher from the driver.
+type AlertPublisherProvider interface {
+	AlertPublisher() AlertPublisher
 }

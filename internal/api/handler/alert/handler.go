@@ -18,11 +18,15 @@ package alert
 
 import (
 	"github.com/muixstudio/clio/internal/domain/alert/repository"
+	alertRouter "github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
 	repository.AlertPersisterProvider
+	alertRouter.RouteWriterProvider
+	alertRouter.RouteReloaderProvider
+	alertRouter.RouteTreeLoaderProvider
 
 	logger.Logger
 }

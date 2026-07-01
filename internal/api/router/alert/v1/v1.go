@@ -20,11 +20,15 @@ import (
 	"github.com/gin-gonic/gin"
 	alertHandler "github.com/muixstudio/clio/internal/api/handler/alert"
 	"github.com/muixstudio/clio/internal/domain/alert/repository"
+	alertRouter "github.com/muixstudio/clio/internal/infra/zus/dispatch"
 	"github.com/muixstudio/clio/internal/logger"
 )
 
 type dependencies interface {
 	repository.AlertPersisterProvider
+	alertRouter.RouteWriterProvider
+	alertRouter.RouteReloaderProvider
+	alertRouter.RouteTreeLoaderProvider
 
 	logger.Logger
 }
@@ -34,6 +38,12 @@ func Register(router *gin.RouterGroup, deps dependencies) {
 	handler := initHandler(deps)
 	{
 		v1.GET("/team/:team_id/alerts", handler.List())
+
+		v1.GET("/team/:team_id/alert-routes", handler.GetRouteTree())
+		v1.POST("/team/:team_id/alert-route", handler.CreateRoute())
+		v1.PATCH("/team/:team_id/alert-route/:route_id", handler.UpdateRoute())
+		v1.DELETE("/team/:team_id/alert-route/:route_id", handler.DeleteRoute())
+		v1.POST("/team/:team_id/alert-routes/reload", handler.ReloadRoutes())
 	}
 }
 
