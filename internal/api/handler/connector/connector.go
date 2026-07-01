@@ -26,6 +26,7 @@ import (
 	connectorEntity "github.com/muixstudio/clio/internal/domain/connector/entity"
 	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
+	"github.com/muixstudio/clio/internal/infra/orgctx"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
 )
@@ -142,12 +143,17 @@ func (h *ConnectorHandler) Update() gin.HandlerFunc {
 			return
 		}
 
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
 		updates := connectorRepo.Update{
 			Name:    req.Name,
 			Enabled: req.Enabled,
-			TeamID:  &teamID,
 		}
-		if err := h.d.ConnectorPersister().UpdateConnector(c.Request.Context(), connectorID, &updates); err != nil {
+		if err := h.d.ConnectorPersister().UpdateConnector(c.Request.Context(), orgID, teamID, connectorID, &updates); err != nil {
 			log.Error("update connector: failed", zap.String("id", cid), zap.Error(err))
 			response.Fail(c, err)
 			return
@@ -169,16 +175,8 @@ func (h *ConnectorHandler) Count() gin.HandlerFunc {
 			return
 		}
 
-		tid := c.Param("team_id")
-		teamID, err := uuid.Parse(tid)
-		if err != nil {
-			response.Fail(c, errors.BadRequest("INVALID_ARGUMENT", "invalid argument connector team id: "+tid))
-			return
-		}
-
 		options := connectorRepo.CountOptions{
-			Type:   &connectorType,
-			TeamID: &teamID,
+			Type: &connectorType,
 		}
 		switch c.Query("status") {
 		case "enable":
@@ -217,7 +215,13 @@ func (h *ConnectorHandler) Delete() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.d.ConnectorPersister().DeleteConnector(c.Request.Context(), connectorID, teamID); err != nil {
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		if err := h.d.ConnectorPersister().DeleteConnector(c.Request.Context(), orgID, teamID, connectorID, teamID); err != nil {
 			log.Error("delete connector: failed", zap.String("team_id", tid), zap.String("connector_id", cid), zap.Error(err))
 			response.Fail(c, err)
 			return
@@ -250,7 +254,6 @@ func (h *ConnectorHandler) List() gin.HandlerFunc {
 		options := connectorRepo.ListOptions{
 			Page:     1,
 			PageSize: 20,
-			TeamID:   &teamID,
 		}
 		if req.Page != nil {
 			options.Page = *req.Page
@@ -276,7 +279,13 @@ func (h *ConnectorHandler) List() gin.HandlerFunc {
 			}
 		}
 
-		records, err := h.d.ConnectorPersister().ListConnectors(c.Request.Context(), &options)
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		records, err := h.d.ConnectorPersister().ListConnectors(c.Request.Context(), orgID, teamID, &options)
 		if err != nil {
 			log.Error("list connectors: query failed", zap.Error(err))
 			response.Fail(c, err)

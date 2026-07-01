@@ -36,22 +36,22 @@ type TeamRoleUpdate struct {
 type (
 	TeamPersister interface {
 		CreateTeam(ctx context.Context, t *entity.Team) error
-		GetTeam(ctx context.Context, id uuid.UUID) (*entity.Team, error)
-		GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]entity.Team, error)
-		ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Team, error)
-		UpdateTeam(ctx context.Context, id uuid.UUID, update TeamUpdate) error
-		DeleteTeam(ctx context.Context, id uuid.UUID) error
-		ListTeams(ctx context.Context) ([]*entity.Team, error)
+		GetTeam(ctx context.Context, orgId uuid.NullUUID, id uuid.UUID) (*entity.Team, error)
+		GetTeams(ctx context.Context, orgId uuid.NullUUID, ids *[]uuid.UUID) (*[]entity.Team, error)
+		ListTeamsByUserID(ctx context.Context, orgId uuid.NullUUID, userID uuid.UUID) ([]*entity.Team, error)
+		UpdateTeam(ctx context.Context, orgId uuid.NullUUID, id uuid.UUID, update TeamUpdate) error
+		DeleteTeam(ctx context.Context, orgId uuid.NullUUID, id uuid.UUID) error
+		ListTeams(ctx context.Context, orgId uuid.NullUUID) ([]*entity.Team, error)
 	}
 	TeamPersisterProvider interface {
 		TeamPersister() TeamPersister
 	}
 
 	TeamMemberPersister interface {
-		AddMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
-		GetMember(ctx context.Context, id uuid.UUID) (*entity.TeamMember, error)
-		RemoveMember(ctx context.Context, id uuid.UUID) error
-		ListMembers(ctx context.Context, teamID uuid.UUID) ([]*entity.TeamMember, error)
+		AddMember(ctx context.Context, orgId uuid.NullUUID, teamID uuid.UUID, userID uuid.UUID) error
+		GetMember(ctx context.Context, orgId uuid.NullUUID, id uuid.UUID) (*entity.TeamMember, error)
+		RemoveMember(ctx context.Context, orgId uuid.NullUUID, id uuid.UUID) error
+		ListMembers(ctx context.Context, orgId uuid.NullUUID, teamID uuid.UUID) ([]*entity.TeamMember, error)
 		//UpdateMemberRole(ctx context.Context, memberID uuid.UUID, roleID uuid.UUID) error
 	}
 	TeamMemberPersisterProvider interface {

@@ -25,10 +25,13 @@ import (
 type Connector struct {
 	ID uuid.UUID `json:"id"`
 
-	Name    string
-	Type    string
-	Token   string
-	TeamID  uuid.UUID
+	Name  string
+	Type  string
+	Token string
+
+	OrganizationID uuid.NullUUID
+	TeamID         uuid.UUID
+
 	Labels  map[string]string
 	Enabled bool
 

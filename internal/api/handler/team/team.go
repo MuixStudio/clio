@@ -25,6 +25,7 @@ import (
 	teamEntity "github.com/muixstudio/clio/internal/domain/team/entity"
 	teamRepo "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/infra/errors"
+	"github.com/muixstudio/clio/internal/infra/orgctx"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
 )
@@ -70,7 +71,13 @@ func (h *TeamHandler) Get() gin.HandlerFunc {
 			return
 		}
 
-		t, err := h.d.TeamPersister().GetTeam(c.Request.Context(), teamID)
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		t, err := h.d.TeamPersister().GetTeam(c.Request.Context(), orgID, teamID)
 		if err != nil {
 			log.Error("get team: failed", zap.String("id", tid), zap.Error(err))
 			response.Fail(c, err)
@@ -143,7 +150,13 @@ func (h *TeamHandler) Update() gin.HandlerFunc {
 			Name:        req.Name,
 			Description: req.Description,
 		}
-		if err := h.d.TeamPersister().UpdateTeam(c.Request.Context(), teamID, update); err != nil {
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		if err := h.d.TeamPersister().UpdateTeam(c.Request.Context(), orgID, teamID, update); err != nil {
 			log.Error("update team: failed", zap.String("id", tid), zap.Error(err))
 			response.Fail(c, err)
 			return
@@ -165,7 +178,13 @@ func (h *TeamHandler) Delete() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.d.TeamPersister().DeleteTeam(c.Request.Context(), teamID); err != nil {
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		if err := h.d.TeamPersister().DeleteTeam(c.Request.Context(), orgID, teamID); err != nil {
 			log.Error("delete team: failed", zap.String("id", tid), zap.Error(err))
 			response.Fail(c, err)
 			return
@@ -187,7 +206,13 @@ func (h *TeamHandler) GetUserTeams() gin.HandlerFunc {
 			return
 		}
 
-		records, err := h.d.TeamPersister().ListTeamsByUserID(c.Request.Context(), userID)
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		records, err := h.d.TeamPersister().ListTeamsByUserID(c.Request.Context(), orgID, userID)
 		if err != nil {
 			log.Error("get user teams: failed", zap.String("user_id", uid), zap.Error(err))
 			response.Fail(c, err)
@@ -232,7 +257,13 @@ func (h *TeamHandler) List() gin.HandlerFunc {
 			pageSize = *req.PageSize
 		}
 
-		records, err := h.d.TeamPersister().ListTeams(c.Request.Context())
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		records, err := h.d.TeamPersister().ListTeams(c.Request.Context(), orgID)
 		if err != nil {
 			log.Error("list teams: query failed", zap.Error(err))
 			response.Fail(c, err)

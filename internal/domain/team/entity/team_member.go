@@ -28,7 +28,10 @@ type TeamMember struct {
 	UserID uuid.UUID
 	Email  string
 	//RoleID    uuid.UUID
-	JoinedAt  time.Time
+	JoinedAt time.Time
+
+	OrganizationID uuid.NullUUID
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
