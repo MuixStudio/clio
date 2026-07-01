@@ -22,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/muixstudio/clio/internal/infra/errors"
+	"github.com/muixstudio/clio/internal/infra/orgctx"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
 )
@@ -37,8 +38,19 @@ func (h *WebhookHandler) Receive() gin.HandlerFunc {
 			return
 		}
 		routeType := c.Param("type")
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
 
-		connector, err := h.d.ConnectorPersister().GetConnector(c.Request.Context(), connectorID)
+		teamID, err := uuid.Parse(c.Query("team_id"))
+		if err != nil {
+			response.Fail(c, errors.BadRequest("INVALID_ARGUMENT", "invalid argument connector team id"))
+			return
+		}
+
+		connector, err := h.d.ConnectorPersister().GetConnector(c.Request.Context(), orgID, teamID, connectorID)
 		if err != nil {
 			log.Warn("webhook receive: connector not found", zap.String("connector_id", cid), zap.Error(err))
 			response.Fail(c, err)
@@ -90,7 +102,8 @@ func (h *WebhookHandler) Receive() gin.HandlerFunc {
 
 		// Publish only after persistence succeeds. The database remains the source
 		// of truth; dispatch can ack on receipt and rebuild/replay later if needed.
-		err = h.d.AlertPublisher().PublishAlerts(c.Request.Context(), alerts)
+
+		err = h.d.AlertPersister().Save(c.Request.Context(), alerts[0])
 		if err != nil {
 			log.Error("webhook receive: publish alerts failed", zap.String("type", routeType), zap.Error(err))
 			response.Fail(c, errors.InternalServerError("INTERNAL_SERVER_ERROR", "failed to publish alerts").WithCause(err))

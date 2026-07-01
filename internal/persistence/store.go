@@ -17,15 +17,10 @@
 package persistence
 
 import (
-	"context"
-
-	"github.com/google/uuid"
-	repository2 "github.com/muixstudio/clio/internal/domain/alert/repository"
-	"github.com/muixstudio/clio/internal/domain/channel/repository"
-	repository3 "github.com/muixstudio/clio/internal/domain/connector/repository"
-	repository4 "github.com/muixstudio/clio/internal/domain/team/repository"
-	"github.com/muixstudio/clio/internal/infra/zus/dispatch"
-
+	alertRepo "github.com/muixstudio/clio/internal/domain/alert/repository"
+	channelRepo "github.com/muixstudio/clio/internal/domain/channel/repository"
+	connectorRepo "github.com/muixstudio/clio/internal/domain/connector/repository"
+	teamRepo "github.com/muixstudio/clio/internal/domain/team/repository"
 	loginFlow "github.com/muixstudio/clio/internal/flow/login"
 	logoutLfow "github.com/muixstudio/clio/internal/flow/logout"
 	recoveryFlow "github.com/muixstudio/clio/internal/flow/recovery"
@@ -36,23 +31,13 @@ import (
 	codestrategy "github.com/muixstudio/clio/internal/strategy/code"
 )
 
-// AlertRoutePersister manages alert route rows and loads a team's routing tree
-// for the dispatcher.
-type AlertRoutePersister interface {
-	LoadAlertRouteTree(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID) (*dispatch.Route, error)
-	AddAlertRoute(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, in dispatch.AddRouteInput) (uuid.UUID, error)
-	UpdateAlertRoute(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, in dispatch.UpdateRouteInput) error
-	DeleteAlertRoute(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, routeID uuid.UUID) error
-}
-
 type Store interface {
-	repository3.ConnectorPersister
-	repository2.AlertPersister
-	AlertRoutePersister
-	repository.ChannelPersister
-	repository.ChannelMemberPersister
-	repository4.TeamPersister
-	repository4.TeamMemberPersister
+	connectorRepo.ConnectorPersister
+	alertRepo.AlertPersister
+	channelRepo.ChannelPersister
+	channelRepo.ChannelMemberPersister
+	teamRepo.TeamPersister
+	teamRepo.TeamMemberPersister
 
 	session.SessionPersister
 	session.SessionTokenExchangeCodePersister

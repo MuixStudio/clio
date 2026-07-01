@@ -32,13 +32,14 @@ import (
 func toConnectorModel(c *entity.Connector) *model.Connector {
 	labels, _ := json.Marshal(c.Labels)
 	return &model.Connector{
-		ID:      c.ID,
-		Type:    c.Type,
-		Name:    c.Name,
-		Token:   c.Token,
-		TeamID:  c.TeamID,
-		Labels:  labels,
-		Enabled: c.Enabled,
+		ID:             c.ID,
+		Type:           c.Type,
+		Name:           c.Name,
+		Token:          c.Token,
+		TeamID:         c.TeamID,
+		OrganizationID: c.OrganizationID,
+		Labels:         labels,
+		Enabled:        c.Enabled,
 	}
 }
 
@@ -46,29 +47,24 @@ func fromConnectorModel(m *model.Connector) *entity.Connector {
 	var labels map[string]string
 	_ = json.Unmarshal(m.Labels, &labels)
 	return &entity.Connector{
-		ID:        m.ID,
-		Type:      m.Type,
-		Name:      m.Name,
-		Token:     m.Token,
-		TeamID:    m.TeamID,
-		Labels:    labels,
-		Enabled:   m.Enabled,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		ID:             m.ID,
+		Type:           m.Type,
+		Name:           m.Name,
+		Token:          m.Token,
+		OrganizationID: m.OrganizationID,
+		TeamID:         m.TeamID,
+		Labels:         labels,
+		Enabled:        m.Enabled,
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
 	}
 }
 
 func (gs *GormStore) CreateConnector(ctx context.Context, c *entity.Connector) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
 	if c.ID == (uuid.UUID{}) {
 		c.ID = uuid.New()
 	}
 	m := toConnectorModel(c)
-	m.OrganizationID = orgID
 	result := gs.db.WithContext(ctx).Create(m)
 	if result.Error != nil {
 		return errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(result.Error)
@@ -76,17 +72,13 @@ func (gs *GormStore) CreateConnector(ctx context.Context, c *entity.Connector) e
 	return nil
 }
 
-func (gs *GormStore) GetConnector(ctx context.Context, id uuid.UUID) (*entity.Connector, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) GetConnector(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, id uuid.UUID) (*entity.Connector, error) {
 	var m model.Connector
 	result := gs.db.WithContext(ctx).Where(
 		map[string]any{
 			"id":              id,
 			"organization_id": orgID,
+			"team_id":         teamID,
 		},
 	).First(&m)
 	if result.Error != nil {
@@ -98,12 +90,7 @@ func (gs *GormStore) GetConnector(ctx context.Context, id uuid.UUID) (*entity.Co
 	return fromConnectorModel(&m), nil
 }
 
-func (gs *GormStore) UpdateConnector(ctx context.Context, id uuid.UUID, update *connector2.Update) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
+func (gs *GormStore) UpdateConnector(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, id uuid.UUID, update *connector2.Update) error {
 	updates := map[string]any{}
 	if update != nil {
 		if update.Name != nil {
@@ -122,6 +109,7 @@ func (gs *GormStore) UpdateConnector(ctx context.Context, id uuid.UUID, update *
 		Where(map[string]any{
 			"id":              id,
 			"organization_id": orgID,
+			"team_id":         teamID,
 		}).
 		Updates(updates)
 	if result.Error != nil {
@@ -148,10 +136,6 @@ func (gs *GormStore) Count(ctx context.Context, options connector2.CountOptions)
 	if options.Enable != nil {
 		conditions["enabled"] = *options.Enable
 	}
-	if options.TeamID != nil {
-		conditions["team_id"] = *options.TeamID
-	}
-
 	var count int64
 	result := gs.db.WithContext(ctx).Model(&model.Connector{}).
 		Where(conditions).
@@ -162,14 +146,10 @@ func (gs *GormStore) Count(ctx context.Context, options connector2.CountOptions)
 	return count, nil
 }
 
-func (gs *GormStore) ListConnectors(ctx context.Context, options *connector2.ListOptions) ([]*entity.Connector, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) ListConnectors(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, options *connector2.ListOptions) ([]*entity.Connector, error) {
 	conditions := map[string]any{
 		"organization_id": orgID,
+		"team_id":         teamID,
 	}
 	if options.Enable != nil {
 		conditions["enabled"] = *options.Enable
@@ -177,10 +157,6 @@ func (gs *GormStore) ListConnectors(ctx context.Context, options *connector2.Lis
 	if options.Type != nil {
 		conditions["type"] = *options.Type
 	}
-	if options.TeamID != nil {
-		conditions["team_id"] = *options.TeamID
-	}
-
 	query := gs.db.WithContext(ctx).Where(conditions)
 	if options.PageSize > 0 {
 		query = query.Limit(options.PageSize)
@@ -201,13 +177,7 @@ func (gs *GormStore) ListConnectors(ctx context.Context, options *connector2.Lis
 	return connectors, nil
 }
 
-func (gs *GormStore) DeleteConnector(ctx context.Context, id uuid.UUID, teamID uuid.UUID) error {
-
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
+func (gs *GormStore) DeleteConnector(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, id uuid.UUID, _ uuid.UUID) error {
 	result := gs.db.WithContext(ctx).Where(map[string]any{
 		"id":              id,
 		"organization_id": orgID,

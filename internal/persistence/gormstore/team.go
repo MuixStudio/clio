@@ -23,6 +23,7 @@ import (
 	"github.com/muixstudio/clio/internal/domain/team/entity"
 	team2 "github.com/muixstudio/clio/internal/domain/team/repository"
 	"github.com/muixstudio/clio/internal/persistence/gormstore/model"
+	"gorm.io/datatypes"
 
 	"github.com/google/uuid"
 	"github.com/muixstudio/clio/internal/infra/errors"
@@ -33,41 +34,37 @@ import (
 
 func toTeamModel(t *entity.Team) *model.Team {
 	return &model.Team{
-		ID:          t.ID,
-		Name:        t.Name,
-		Description: t.Description,
+		ID:             t.ID,
+		Name:           t.Name,
+		Description:    t.Description,
+		OrganizationID: t.OrganizationID,
 	}
 }
 
 func fromTeamModel(m *model.Team) *entity.Team {
 	return &entity.Team{
-		ID:          m.ID,
-		Name:        m.Name,
-		Description: m.Description,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
+		ID:             m.ID,
+		Name:           m.Name,
+		Description:    m.Description,
+		OrganizationID: m.OrganizationID,
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
 	}
 }
 
 func (gs *GormStore) CreateTeam(ctx context.Context, t *entity.Team) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
 	if t.ID == (uuid.UUID{}) {
 		t.ID = uuid.New()
 	}
 	m := toTeamModel(t)
-	m.OrganizationID = orgID
 
 	// Create the team together with its root alert route in one transaction:
 	// every team always owns exactly one root route, which can never be deleted.
-	err = gs.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := gs.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
 			return err
 		}
-		return tx.Create(rootAlertRoute(orgID, t.ID)).Error
+		return tx.Create(rootAlertRoute(t.OrganizationID, t.ID)).Error
 	})
 	if err != nil {
 		return errors.InternalServerError("INTERNAL_SERVER_ERROR", "persistence: infra has unknow error").WithCause(err)
@@ -75,12 +72,7 @@ func (gs *GormStore) CreateTeam(ctx context.Context, t *entity.Team) error {
 	return nil
 }
 
-func (gs *GormStore) GetTeam(ctx context.Context, id uuid.UUID) (*entity.Team, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) GetTeam(ctx context.Context, orgID uuid.NullUUID, id uuid.UUID) (*entity.Team, error) {
 	var m model.Team
 	result := gs.db.WithContext(ctx).Where(map[string]any{
 		"id":              id,
@@ -95,12 +87,7 @@ func (gs *GormStore) GetTeam(ctx context.Context, id uuid.UUID) (*entity.Team, e
 	return fromTeamModel(&m), nil
 }
 
-func (gs *GormStore) GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]entity.Team, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) GetTeams(ctx context.Context, orgID uuid.NullUUID, ids *[]uuid.UUID) (*[]entity.Team, error) {
 	var models []model.Team
 	result := gs.db.WithContext(ctx).
 		Where("organization_id = ? AND id IN ?", orgID, *ids).
@@ -115,12 +102,7 @@ func (gs *GormStore) GetTeams(ctx context.Context, ids *[]uuid.UUID) (*[]entity.
 	return &teams, nil
 }
 
-func (gs *GormStore) ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Team, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) ListTeamsByUserID(ctx context.Context, orgID uuid.NullUUID, userID uuid.UUID) ([]*entity.Team, error) {
 	var models []model.Team
 	result := gs.db.WithContext(ctx).
 		Joins("JOIN team_members ON team_members.team_id = teams.id").
@@ -136,12 +118,7 @@ func (gs *GormStore) ListTeamsByUserID(ctx context.Context, userID uuid.UUID) ([
 	return teams, nil
 }
 
-func (gs *GormStore) UpdateTeam(ctx context.Context, id uuid.UUID, update team2.TeamUpdate) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
+func (gs *GormStore) UpdateTeam(ctx context.Context, orgID uuid.NullUUID, id uuid.UUID, update team2.TeamUpdate) error {
 	updates := map[string]any{}
 	if update.Name != nil {
 		updates["name"] = *update.Name
@@ -165,12 +142,7 @@ func (gs *GormStore) UpdateTeam(ctx context.Context, id uuid.UUID, update team2.
 	return nil
 }
 
-func (gs *GormStore) DeleteTeam(ctx context.Context, id uuid.UUID) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
+func (gs *GormStore) DeleteTeam(ctx context.Context, orgID uuid.NullUUID, id uuid.UUID) error {
 	result := gs.db.WithContext(ctx).Where(map[string]any{
 		"id":              id,
 		"organization_id": orgID,
@@ -184,12 +156,7 @@ func (gs *GormStore) DeleteTeam(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (gs *GormStore) ListTeams(ctx context.Context) ([]*entity.Team, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) ListTeams(ctx context.Context, orgID uuid.NullUUID) ([]*entity.Team, error) {
 	var models []model.Team
 	result := gs.db.WithContext(ctx).Where(map[string]any{
 		"organization_id": orgID,
@@ -356,12 +323,7 @@ func fromTeamMemberModel(m *model.TeamMember) (*entity.TeamMember, error) {
 	}, nil
 }
 
-func (gs *GormStore) AddMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
+func (gs *GormStore) AddMember(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID, userID uuid.UUID) error {
 	model := &model.TeamMember{
 		ID:       uuid.New(),
 		TeamID:   teamID,
@@ -376,12 +338,7 @@ func (gs *GormStore) AddMember(ctx context.Context, teamID uuid.UUID, userID uui
 	return nil
 }
 
-func (gs *GormStore) GetMember(ctx context.Context, id uuid.UUID) (*entity.TeamMember, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) GetMember(ctx context.Context, orgID uuid.NullUUID, id uuid.UUID) (*entity.TeamMember, error) {
 	var m model.TeamMember
 	result := gs.db.WithContext(ctx).Where(map[string]any{
 		"id":              id,
@@ -396,12 +353,7 @@ func (gs *GormStore) GetMember(ctx context.Context, id uuid.UUID) (*entity.TeamM
 	return fromTeamMemberModel(&m)
 }
 
-func (gs *GormStore) RemoveMember(ctx context.Context, id uuid.UUID) error {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-
+func (gs *GormStore) RemoveMember(ctx context.Context, orgID uuid.NullUUID, id uuid.UUID) error {
 	result := gs.db.WithContext(ctx).Where(map[string]any{
 		"id":              id,
 		"organization_id": orgID,
@@ -415,12 +367,7 @@ func (gs *GormStore) RemoveMember(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (gs *GormStore) ListMembers(ctx context.Context, teamID uuid.UUID) ([]*entity.TeamMember, error) {
-	orgID, err := gs.orgIDFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (gs *GormStore) ListMembers(ctx context.Context, orgID uuid.NullUUID, teamID uuid.UUID) ([]*entity.TeamMember, error) {
 	var models []model.TeamMember
 	result := gs.db.WithContext(ctx).
 		Where(map[string]any{
@@ -462,3 +409,17 @@ func (gs *GormStore) ListMembers(ctx context.Context, teamID uuid.UUID) ([]*enti
 //	}
 //	return nil
 //}
+
+func rootAlertRoute(orgID uuid.NullUUID, teamID uuid.UUID) *model.AlertRoute {
+	return &model.AlertRoute{
+		ID:             uuid.New(),
+		OrganizationID: orgID,
+		TeamID:         teamID,
+		Name:           "root",
+		ParentID:       uuid.NullUUID{}, // NULL => root
+		Priority:       0,
+		Matchers:       datatypes.JSON("[]"),
+		Enabled:        true,
+		Continue:       false,
+	}
+}

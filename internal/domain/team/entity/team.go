@@ -26,6 +26,9 @@ type Team struct {
 	ID          uuid.UUID
 	Name        string
 	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+
+	OrganizationID uuid.NullUUID
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

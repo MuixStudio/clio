@@ -28,6 +28,9 @@ type TeamRole struct {
 	Name         string
 	Description  string
 	IsSystemRole bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+
+	OrganizationID uuid.NullUUID
+	
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

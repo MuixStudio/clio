@@ -23,6 +23,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
 	"github.com/muixstudio/clio/internal/infra/errors"
+	"github.com/muixstudio/clio/internal/infra/orgctx"
 	"github.com/muixstudio/clio/internal/infra/response"
 	"go.uber.org/zap"
 )
@@ -55,7 +56,13 @@ func (h *TeamHandler) ListMembers() gin.HandlerFunc {
 			return
 		}
 
-		records, err := h.d.TeamMemberPersister().ListMembers(c.Request.Context(), teamID)
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		records, err := h.d.TeamMemberPersister().ListMembers(c.Request.Context(), orgID, teamID)
 		if err != nil {
 			log.Error("list members: failed", zap.String("team_id", tid), zap.Error(err))
 			response.Fail(c, err)
@@ -97,7 +104,13 @@ func (h *TeamHandler) AddMember() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.d.TeamMemberPersister().AddMember(c.Request.Context(), teamID, req.UserID); err != nil {
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		if err := h.d.TeamMemberPersister().AddMember(c.Request.Context(), orgID, teamID, req.UserID); err != nil {
 			log.Error("add member: failed", zap.String("team_id", tid), zap.Stringer("user_id", req.UserID), zap.Error(err))
 			response.Fail(c, err)
 			return
@@ -120,7 +133,13 @@ func (h *TeamHandler) RemoveMember() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.d.TeamMemberPersister().RemoveMember(c.Request.Context(), memberID); err != nil {
+		orgID, ok := orgctx.OrgIDFromCtx(c.Request.Context())
+		if !ok {
+			response.Fail(c, errors.Unauthorized("MISSING_ORG", "organization context is required"))
+			return
+		}
+
+		if err := h.d.TeamMemberPersister().RemoveMember(c.Request.Context(), orgID, memberID); err != nil {
 			log.Error("remove member: failed", zap.String("team_id", tid), zap.String("member_id", mid), zap.Error(err))
 			response.Fail(c, err)
 			return
